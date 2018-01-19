@@ -1,0 +1,610 @@
+---
+title: "Reproducible GSEA Benchmarking"
+author:
+    - name: Ludwig Geistlinger
+      affiliation: School of Public Health, City University of New York
+      email: ludwig.geistlinger@sph.cuny.edu
+package: GSEABenchmarkeR
+abstract: > 
+    The _GSEABenchmarkeR_ package implements an extendable framework for the
+    reproducible evaluation of set- and network-based methods for the enrichment
+    analysis of gene expression data. This includes support for the efficient
+    execution of these methods on comprehensive real data compendia (microarray
+    and RNA-seq) using parallel computation on standard workstations as well as
+    institutional computer grids. Methods can then be assessed with respect to
+    runtime, statistical significance, and relevance of the results for the
+    investigated phenotypes.
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_depth: 2
+vignette: >
+  % \VignetteIndexEntry{Reproducible GSEA Benchmarking}
+  % \VignetteEngine{knitr::rmarkdown}
+---
+
+```{r style, echo=FALSE}
+suppressPackageStartupMessages({ 
+    library(GSEABenchmarkeR)
+    library(EnrichmentBrowser)
+})
+```
+
+# Setup
+Although gene set enrichment analysis (GSEA) has become an integral part of 
+high-throughput gene expression data analysis, the assessment of enrichment 
+methods remains rudimentary and *ad hoc*.
+In the absence of suitable gold standards, the evaluation is commonly restricted
+to selected data sets and biological reasoning on the relevance of resulting 
+enriched gene sets.
+However, this is typically incomplete and biased towards the individual 
+investigation goals.
+
+As the evaluation is thus typically based on self-defined standards, 
+[Mitrea et al. (2013)](https://doi.org/10.3389/fphys.2013.00278) identified 
+the lack of gold standards for consistent assessment and comparison of 
+enrichment methods as a major bottleneck.
+Furthermore, it is often cumbersome to reproduce existing assessments for 
+additional methods, as this typically involves considerable effort of data 
+processing and method collection.
+
+Leveraging the representative and extendable collection of
+enrichment methods available in the `r Biocpkg("EnrichmentBrowser")` package, 
+our new `r Biocpkg("GSEABenchmarkeR")` package facilitates the efficient execution 
+of these methods on comprehensive real data compendia.
+The compendia are curated collections of microarray and RNA-seq datasets 
+investigating human diseases (mostly specific cancer types), for which 
+disease-relevant gene sets have been defined _a priori_.
+
+Consistently applied to these datasets, enrichment methods can then be subjected
+ to a systematic and reproducible assessment of _(i)_ general applicability in means 
+of runtime, _(ii)_ statistical significance, especially how the fraction of 
+significant gene sets relates to the fraction of differentially expressed genes,
+and _(iii)_ phenotype relevance, i.e. whether enrichment methods produce gene set 
+rankings in which phenotype-relevant gene sets accumulate at the top.
+   
+In the following, we demonstrate how the package can be used to
+
+- load specific pre-defined and user-defined data compendia,
+- carry out differential expression analysis across datasets,
+- apply enrichment methods to multiple datasets, and
+- benchmark results with respect to the chosen criteria.
+
+We start by loading the package.
+
+```{r setup}
+library(GSEABenchmarkeR)
+```
+
+# Expression data sources
+
+The `r Biocpkg("GSEABenchmarkeR")` package implements a general interface for 
+loading compendia of expression datasets.
+This includes 
+
+- the pre-defined GEO2KEGG microarray compendium that consists of 42 datasets 
+    investigating a total of 19 different human diseases as collected by 
+    Tarca et al. ([2012](https://doi.org/10.1186/1471-2105-13-136) and
+    [2013](https://doi.org/10.1371/journal.pone.0079217)), 
+- the pre-defined TCGA RNA-seq compendium, consisting of datasets from 
+    [The Cancer Genome Atlas](https://cancergenome.nih.gov) 
+    investigating a total of 34 different cancer types, and 
+- user-defined data from file.
+
+In the following, we describe both pre-defined compendia in more detail and also
+demonstrate how user-defined data can be incorporated.
+
+## Microarray compendium
+
+Although RNA-seq (read count data) has become the *de facto* standard for 
+transcriptomic profiling, it is important to know that many methods for 
+differential expression and gene set enrichment analysis have been originally
+developed for microarray data (intensity measurements).
+However, differences in data distribution assumptions (microarray: quasi-normal,
+RNA-seq: negative binomial) made adaptations in differential expression analysis
+and, to some extent, also in gene set enrichment analysis necessary.
+
+Nevertheless, the comprehensive collection and curation of microarray data in 
+online repositories such as [GEO](https://www.ncbi.nlm.nih.gov/geo) still 
+represent a valuable resource.
+In particular, Tarca et al. ([2012](https://doi.org/10.1186/1471-2105-13-136) 
+and [2013](https://doi.org/10.1371/journal.pone.0079217)) compiled 42 datasets
+from GEO, each investigating a human disease for which a specific 
+[KEGG](http://www.genome.jp/kegg) pathway exists. 
+
+These pathways are accordingly defined as the target pathways for the various 
+enrichment methods when applied to the respective datasets. For instance, 
+methods are expected to rank the 
+[Alzheimer's disease pathway](http://www.genome.jp/kegg-bin/show_pathway?hsa05010)
+close to the top when applied to
+[GSE1297](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE1297),
+a dataset investigating Alzheimer's disease in a case-control setup.    
+
+Furthermore, Tarca et al. made these datasets available in the _Bioconductor_ 
+packages `r Biocpkg("KEGGdzPathwaysGEO")` and 
+`r Biocpkg("KEGGandMetacoreDzPathwaysGEO")`.
+
+The `r Biocpkg("GSEABenchmarkeR")` package simplifies access to the compendium 
+and allows to load it into the workspace via 
+
+```{r maComp}
+ma.ids <- loadEData("geo2kegg")
+ma.ids
+```
+
+A specific dataset of the compendium can be obtained via
+
+```{r getDatasetProbe}
+getDataset(ma.ids[1])
+```
+
+which returns, in this example, an `ExpressionSet` (documented in the 
+`r Biocpkg("Biobase")` package) that contains expression levels of 
+22,283 probe sets measured for 16 patients. 
+
+To prepare the datasets for subsequent analysis, the `r Biocpkg("GSEABenchmarkeR")`
+package provides the function `maPreprocApply`.
+The function invokes `EnrichmentBrowser::probe.2.gene.eset` on each dataset 
+to summarize expression levels for probes annotated to the same gene. 
+Here, we apply the function to the first 5 datasets of the compendium. 
+
+```{r maPreproc}
+maPreprocApply(ma.ids[1:5])
+```
+
+Now, 
+```{r getDatasetGene}
+getDataset(ma.ids[1])
+```
+returns a `r Biocpkg("SummarizedExperiment")` that contains the summarized 
+expression values for 12,994 genes. Furthermore, sample groups 
+ are defined in the `colData` column **GROUP**, yielding here 7 cases (1) and 
+9 controls (0).
+
+```{r maGroups}
+se <- getDataset(ma.ids[1])
+table(se$GROUP)
+```
+
+## RNA-seq compendium
+
+The Cancer Genome Atlas ([TCGA](https://cancergenome.nih.gov)) project performed
+ a molecular investigation of various cancer types on an unprecedented scale 
+including various genomic high-throughput technologies.
+In particular, transcriptomic profiling of the investigated cancer types has 
+comprehensively been carried out with RNA-seq in tumor and adjacent normal tissue.
+
+Among the various resources that redistribute TCGA data, 
+[Rahman et al. (2015)](https://doi.org/10.1093/bioinformatics/btv377)
+consistently preprocessed the RNA-seq data for 24 cancer types and made the data 
+available in the GEO dataset
+[GSE62944](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE62944).
+
+The GSE62944 compendium can be loaded using the `loadEData` function, 
+which provides the datasets ready for subsequent differential expression and 
+gene set enrichment analysis.
+
+Here, we load the compendium into the workspace using only two of the datasets. 
+
+```{r rseqComp}
+rseq.ids <- loadEData("tcga", nr.datasets=2)
+rseq.ids
+```
+
+For example, the breast cancer dataset contains RNA-seq read counts for roughly
+20,000 genes measured in 1,119 tumor (1) and 113 adjacent normal (0) samples. 
+
+```{r brca}
+brca <- getDataset(rseq.ids[2])
+brca
+table(brca$GROUP)
+```
+
+## User-defined data compendium
+
+With the easy and fast access to the GEO2KEGG and TCGA compendia, enrichment 
+methods can be directly applied and assessed on well-studied, standardized 
+expression datasets.
+Nevertheless, benchmarking with the `r Biocpkg("GSEABenchmarkeR")` package is 
+designed to be extendable to additional datasets as well.
+ 
+Therefore, the `loadEData` function also accepts a directory where datasets,
+preferably of class `r Biocpkg("SummarizedExperiment")`, have been saved as
+[RDS](https://stat.ethz.ch/R-manual/R-devel/library/base/html/readRDS.html)
+files.
+
+```{r userComp}
+data.dir <- system.file("extdata", package="GSEABenchmarkeR")
+edat.dir <- file.path(data.dir, "myEData")
+data.ids <- loadEData(edat.dir)
+data.ids
+getDataset(data.ids[1])
+```
+
+# Differential expression
+
+To perform differential expression (DE) analysis between sample groups for 
+selected datasets of a compendium, the `r Biocpkg("GSEABenchmarkeR")` package 
+provides the function `deApply`.
+
+The function invokes `EnrichmentBrowser::de.ana` on each dataset, which contrasts
+the sample groups as defined in the **GROUP** variable.
+
+Here, we apply the function to 5 datasets of the GEO2KEGG compendium. 
+
+```{r deAna}
+deApply(ma.ids[1:5], de.method="limma", padj.method="flexible")
+getDataset(ma.ids[1])
+```
+
+Note: large-scale DE studies typically report a gene as differentially expressed
+ if the corresponding DE *p*-value, corrected for multiple testing, satisfies 
+the chosen significance level.
+Enrichment methods that work directly on the list of DE genes are then 
+substantially influenced by the multiple testing correction. 
+
+An example is the frequently used over-representation analysis (ORA), which 
+assesses the overlap between the DE genes and a gene set under study based
+on the hypergeometric distribution (see the vignette of the 
+`r Biocpkg("EnrichmentBrowser")` package, Appendix A, for an introduction).
+
+ORA is inapplicable if there are no or only a few genes satisfying the 
+significance threshold. 
+On the other hand, application of ORA is useless if almost all genes are DE.
+
+Using `padj.method="flexible"` accounts for these cases by applying multiple 
+testing correction in dependence on the observed degree of differential expression: 
+
+- the correction method from
+    [Benjamini and Hochberg](http://sci2s.ugr.es/keel/pdf/specific/articulo/Shaffer95MHT.pdf)
+    (BH) is applied, if it renders $\ge 1\%$ and $\le 25\%$ of all measured 
+    genes as DE,
+- the *p*-values are left unadjusted, if the BH correction results in $<1\%$ 
+    DE genes, and
+- the more stringent
+    [Bonferroni](http://sci2s.ugr.es/keel/pdf/specific/articulo/Shaffer95MHT.pdf)
+    correction is applied, if the BH correction results in $>25\%$ DE genes. 
+
+Note that resulting $p$-values are not further used for assessing the 
+statistical significance of DE genes within or between datasets. 
+They are solely used to determine which genes are included in the analysis with
+ORA - where the flexible correction ensures that the fraction of included genes
+is roughly in the same order of magnitude across datasets. 
+Alternative strategies could also be applied (such as taking a constant number of
+genes for each dataset or generally excluding ORA methods from the assessment). 
+
+
+# Enrichment analysis
+
+In the following, we demonstrate how to carry out enrichment analysis in a 
+benchmark setup.
+Therefore, we use the collection of human KEGG gene sets as obtained 
+with `get.kegg.genesets` from the `r Biocpkg("EnrichmentBrowser")`
+package.
+
+```{r getGS}
+library(EnrichmentBrowser)
+kegg.gs <- get.kegg.genesets("hsa")
+```
+
+At the core of applying a specific enrichment method to a single dataset is the
+`runEA` function, which delegates execution of the chosen method to either
+`EnrichmentBrowser::sbea` (set-based enrichment analysis) or
+`EnrichmentBrowser::nbea` (network-based enrichment analysis).
+In addition, it returns CPU time used and allows to save results for subsequent
+assessment.
+
+Here, we carry out ORA on the first dataset of the GEO2KEGG compendium.
+```{r runEA}
+se <- getDataset(ma.ids[1])
+kegg.ora.res <- runEA(se, method="ora", gs=kegg.gs)
+kegg.ora.res
+```
+
+Applying `runEA` for several methods on multiple datasets can be done using the
+function `eaApply`.
+As an example, we carry out ORA and
+[CAMERA](https://doi.org/10.1093/nar/gks461)
+on 5 datasets of the GEO2KEGG compendium saving the results in a temporary 
+directory.
+
+```{r eaAll}
+res.dir <- tempdir()
+res <- eaApply(ma.ids[1:5], methods=c("ora", "camera"), 
+                gs=kegg.gs, save2file=TRUE, out.dir=res.dir)
+res$ora[1:2]
+```
+
+Note: saving the results to file is typically recommended when carrying out
+several methods on multiple datasets for subsequent assessment. 
+This makes results, potentially obtained from time-consuming computations, 
+to persist across _R_ sessions. 
+In case of unexpected errors, this also allows to resume computation from the 
+point of failure instead of running the full computation anew.
+
+# Benchmarking
+
+Once methods have been applied to a chosen benchmark compendium, they can be 
+subjected to a comparative assessment regarding runtime, statistical significance
+and phenotype relevance. 
+
+To demonstrate how each criterion can be evaluated, we consider the example of 
+the previous section, where we applied ORA and CAMERA on 5 datasets of the 
+GEO2KEGG compendium. 
+
+However, note that this minimal example is used to illustrate the basic 
+functionality in a time-saving manner - as generally intended in a vignette. 
+To draw conclusions on the individual performance of both methods, a more 
+comprehensive assessment, involving application to the full compendium, should be 
+carried out.
+
+## Runtime
+
+Runtime, i.e. CPU time used, is an intuitive and important measure of the 
+applicability of a method.
+For enrichment methods, runtime mainly depends on whether methods rely on 
+permutation testing, and in case, how computationally intensive recomputation of 
+the respective statistic in each permutation is (see
+[Figure 4](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4721010/figure/Fig4)
+in
+[Geistlinger et al., 2016](https://doi.org/10.1186/s12859-016-0884-1)).
+  
+To obtain the runtime from the application of ORA and CAMERA to 5 datasets of the
+GEO2KEGG compendium, we can use the `readRuntime` function as we have saved 
+results to the indicated result directory in the above call of `eaApply`.
+ 
+```{r readRT}
+ea.rtimes <- readRuntime(res.dir, ma.ids[1:5], methods=c("ora", "camera"))
+ea.rtimes
+```
+
+For visualization of assessment results, the `bpPlot` function can be used to 
+create customized boxplots for specific benchmark criteria.   
+
+```{r plotRuntime, fig.width=6, fig.height=6}
+bpPlot(ea.rtimes, what="runtime")
+```
+
+As both methods are simple gene set tests without permutation, they are among the
+fastest in the field - with CAMERA being roughly twice as fast as ORA.
+
+```{r runtimeORAvsCAMERA, fig.width=6, fig.height=6}
+mean(ea.rtimes$ora) / mean(ea.rtimes$camera)
+```
+
+## Fraction of significant gene sets
+
+The statistical accuracy of the significance estimation in gene set tests has 
+been repeatedly debated.
+For example, systematic inflation of statistical significance in ORA due to an 
+unrealistic independence assumption between genes is well-documented 
+([Goeman and Buehlmann, 2007](https://doi.org/10.1093/bioinformatics/btm051)).
+On the other hand, the permutation procedure incorporated in many gene set tests
+has been shown to be biased
+([Efron and Tibshirani, 2007](https://doi.org/10.1214/07-AOAS101)),
+and also inaccurate in case permutation $p$-values are reported as zero 
+([Phipson and Smyth, 2010](https://doi.org/10.2202/1544-6115.1585)).
+
+Not only theoretically relevant, these aspects, leading to inappropriately large 
+fractions of significant gene sets, can also considerably impair prioritization of
+gene sets in practice.
+It is therefore important to evaluate resulting fractions of significant gene 
+sets in comparison to other methods and with respect to the fraction of 
+differentially expressed genes as a baseline.
+
+We use the `readRankings` function to obtain the saved gene set rankings of ORA
+and CAMERA when applied to 5 datasets of the GEO2KEGG compendium (see above call
+of `eaApply`).
+
+```{r readRankings}
+ea.ranks <- readRankings(res.dir, ma.ids[1:5], methods=c("ora", "camera"))
+lengths(ea.ranks)
+ea.ranks$ora[1:2]
+```
+
+The `evalNrSigSets` calculates the percentage of significant gene sets given a 
+significance level `alpha` and a multiple testing correction method `padj`. 
+We can visualize assessment results as before using `bpPlot`, which demonstrates
+ here that CAMERA produces substantially larger fractions of significant 
+gene sets than ORA.
+
+```{r plotAdjSigSets, fig.width=6, fig.height=6}
+sig.sets <- evalNrSigSets(ea.ranks, alpha=0.05, padj="BH")
+sig.sets
+bpPlot(sig.sets, what="sig.sets")
+```
+
+<!--
+Note: although the relation sometimes not clearcut, fraction of DE genes is a 
+reasonable baseline.
+-->
+
+## Phenotype relevance
+
+As introduced above, Tarca et al. ([2012](https://doi.org/10.1186/1471-2105-13-136) 
+and [2013](https://doi.org/10.1371/journal.pone.0079217)) also assigned a target
+ pathway to each dataset of the GEO2KEGG compendium, which is considered 
+highly-relevant for the respective phenotype investigated. 
+However, the relation between dataset, investigated phenotype and assigned target
+pathway is not always clear-cut.
+In addition, there is typically more than one pathway that is considered relevant
+for the investigated phenotype.
+
+On the other hand, evaluations of published enrichment methods often conclude on
+phenotype relevance, if there is *any* association between top-ranked gene sets 
+and the investigated phenotype.
+
+A more systematic approach is used in the
+[MalaCards](https://www.malacards.org) database of human diseases.
+Here, relevance of [GO](http://www.geneontology.org)
+and [KEGG](http://www.genome.jp/kegg) gene sets is summarized from 
+(*i*) experimental evidence and (*ii*) co-citation with the respective disease 
+in the literature.  
+
+### MalaCards disease relevance rankings
+
+The `r Biocpkg("GSEABenchmarkeR")` package provides MalaCards relevance rankings
+for the diseases investigated in the datasets of the GEO2KEGG and TCGA compendia.
+Here, we load the relevance rankings for KEGG gene sets and demonstrate how they
+can be incorporated in the assessment of phenotype relevance.
+
+We note that the relevance rankings contain different numbers of gene sets for 
+different diseases, i.e. only gene sets for which evidence/association with the 
+respective disease has been found are listed in a ranking. 
+
+For demonstration, we inspect the relevance rankings for Alzheimer's disease 
+(ALZ) and breast cancer (BRCA) containing 57 and 142 gene sets, respectively. 
+
+```{r malaRankings}
+mala.kegg.file <- file.path(data.dir, "malacards", "KEGG.rds")
+mala.kegg <- readRDS(mala.kegg.file)
+sapply(mala.kegg, nrow)
+mala.kegg$ALZ
+mala.kegg$BRCA
+```
+
+### Mapping between dataset ID and disease code
+
+To obtain the relevance ranking of the respective disease investigated when 
+assessing results on a specific dataset, a mapping between dataset and 
+investigated disease is required. 
+The function `readDataId2diseaseCodeMap` reads such a mapping from a tabular 
+text file and turns it into a named vector - where the elements correspond to
+the disease codes and the names to the dataset IDs.
+
+Here, we read the mapping between GSE ID and disease code for the GEO2KEGG
+compendium.   
+
+```{r data2dis}
+d2d.file <- file.path(data.dir, "malacards", "GseId2Disease.txt")
+d2d.map <- readDataId2diseaseCodeMap(d2d.file)
+head(d2d.map)
+```
+
+### Relevance score of a gene set ranking
+
+To evaluate the phenotype relevance of a gene set ranking obtained from the 
+application of an enrichment method to an expression dataset, the function
+`evalRanks` assesses whether the ranking accumulates phenotype-relevant gene 
+sets (i.e. gene sets with high relevance scores) at the top.
+Therefore, the function first transforms the ranks from the enrichment analysis
+to weights - where the greater the weight of a gene set, the more it is ranked 
+towards the top of the GSEA ranking.
+These weights are then multiplied with the corresponding relevance scores and 
+summed up.
+ 
+Here, we use `evalRanks` to assess whether ORA, when applied to the GSE1297 
+dataset, recovers Alzheimer-relevant KEGG pathways.  
+
+```{r evalRanks}
+ea.ranks$ora$GSE1297
+obs.score <- evalRanks(ea.ranks$ora$GSE1297, mala.kegg$ALZ)
+obs.score
+```
+
+### Random relevance score distribution
+
+To assess the significance of the observed relevance score of an enrichment
+method applied to a specific dataset, i.e. to assess how likely it is to 
+observe a score equal or greater than the one obtained, the function `compRand`
+repeatedly applies `evalRanks` to randomly drawn gene set rankings. 
+
+For demonstration, we compute relevance scores for 100 random gene set rankings
+and calculate the corresponding permutation *p*-value. 
+This demonstrates that the relevance score obtained from applying ORA to GSE1297
+significantly exceeds random scores.
+
+```{r compRand}
+gs.names <- ea.ranks$ora$GSE1297$GENE.SET
+gs.ids <- substring(gs.names, 1, 8)
+rand.scores <- compRand(mala.kegg$ALZ, gs.ids, n=100)
+summary(rand.scores)
+(sum(rand.scores >= obs.score) + 1) / 101
+```
+
+### Theoretical optimum
+
+The observed relevance score can be used to compare phenotype relevance of 
+two or more methods when applied to one particular dataset.
+However, as the number of gene sets in the relevance rankings differs between 
+phenotypes (see above Section *5.3.1 MalaCards disease relevance rankings*), 
+comparison between datasets is not straightforward as resulting relevance scores
+scale differently. 
+
+Therefore, the function `compOpt` applies `evalRanks` to the theoretically
+optimal case in which the enrichment analysis ranking is identical to the 
+relevance score ranking. The ratio between observed and optimal score can then
+be used to compare observed scores between datasets.
+
+Here, we compute the optimal score for the Alzheimer relevance ranking, which
+indicates that the score observed for ORA, when applied to GSE1297, is about 68%
+of the optimal score.
+
+```{r compOpt}
+opt.score <- compOpt(mala.kegg$ALZ, gs.ids)
+opt.score
+round(obs.score / opt.score * 100, digits=2)
+```
+
+### Cross-dataset relevance score distribution
+
+Evaluation of phenotype relevance with `evalRanks` for several methods 
+applied across multiple datasets can be done using the function `evalApply`.
+This allows to assess whether certain enrichment methods tend to produce 
+rankings of higher phenotype relevance than other methods when applied to a
+compendium of datasets.
+As explained in the previous section, observed relevance scores are always 
+expressed in relation to the respective optimal score.
+
+For demonstration, we use `evalApply` to evaluate phenotype relevance of the 
+gene set rankings produced by ORA and CAMERA when applied to 5 datasets of the
+GEO2KEGG compendium.
+We can visualize assessment results as before using `bpPlot`, which demonstrates
+here that ORA tends to better recover phenotype-relevant gene sets than CAMERA.  
+
+```{r evalAll, fig.width=6, fig.height=6}
+all.kegg.res <- evalApply(ea.ranks, mala.kegg, d2d.map[ma.ids[1:5]])
+bpPlot(all.kegg.res, what="rel.sets")
+```
+
+# Parallel computation
+
+Leveraging functionality from `r Biocpkg("BiocParallel")`, parallel computation
+can be straightforwardly incorporated in GSEABenchmarkeR's *Apply*-functions, i.e. 
+`maPreprocApply`, `deApply`, and especially `eaApply`.
+In fact, parallel computation has already implicitly been incorporated in the 
+above calls of these functions when carried out on a multi-core machine.
+
+Internally, these functions call `BiocParallel::bplapply`, which triggers parallel
+computation as configured in the first element of `BiocParallel::registered()`.
+See the vignette of the `r Biocpkg("BiocParallel")` package for an introduction.
+
+Inspecting 
+```{r bpRegister}
+BiocParallel::registered()
+```
+shows that the execution uses a `MulticoreParam` per default, where the 
+`bpnworkers` attribute indicates the number of cores involved in the computation.
+
+To change the execution mode of functions provided in the
+`r Biocpkg("GSEABenchmarkeR")` package, accordingly configured computation 
+parameters of class `BiocParallelParam` can either directly be registered via
+`BiocParallel::register`, or supplied with the `parallel` argument of the
+*Apply*-functions.
+
+For demonstration, we configure here a `MulticoreParam` to display a progress bar
+
+```{r bpParam}
+mc.par <- BiocParallel::registered()$MulticoreParam
+BiocParallel::bpprogressbar(mc.par) <- TRUE
+```
+
+and supply `deApply` with the updated computation parameter.
+
+```{r deApplyBP}
+deApply(ma.ids[1:4], parallel=mc.par)
+```
+
+Users that would like to use distributed computation, on e.g. an institutional 
+computer cluster, should consult the vignette of the `r Biocpkg("BiocParallel")` 
+package to similarly configure a `BiocParallelParam` for that purpose.

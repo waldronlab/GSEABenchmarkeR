@@ -1,0 +1,34 @@
+import("Biobase")
+import("SummarizedExperiment")
+import("EnrichmentBrowser")
+
+importFrom("S4Vectors", DataFrame)
+importMethodsFrom("S4Vectors", metadata)
+
+importFrom("grDevices", "dev.off", "pdf", "rainbow")
+importFrom("graphics", "axis", "barplot", "boxplot", "mtext", "par")
+importFrom("methods", "is")
+importFrom("stats", "median", "p.adjust")
+importFrom("utils", "data", "read.delim", "setTxtProgressBar",
+             "txtProgressBar", "untar", "write.table")
+
+export( 
+    bpPlot,
+    compOpt,
+    compRand,
+    deApply,
+    eaApply,
+    evalApply,
+    evalNrSets,
+    evalNrSigSets,
+    evalRanks,
+    getDataset,
+    loadEData,
+    maPreprocApply,
+    readDataId2diseaseCodeMap,
+    readRankings,
+    readRuntime,
+    runEA,
+    writeDE
+)
+    

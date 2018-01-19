@@ -1,0 +1,57 @@
+Package: GSEABenchmarkeR
+Type: Package
+Title: Reproducible GSEA Benchmarking
+Version: 0.99.1
+Author:
+    Ludwig Geistlinger <ludwig.geistlinger@sph.cuny.edu>,
+    Lucas Schiffer <schiffer.lucas@gmail.com>
+Maintainer: Ludwig Geistlinger <Ludwig.Geistlinger@sph.cuny.edu>
+Description:
+    The GSEABenchmarkeR package implements an extendable framework for the
+    reproducible evaluation of set- and network-based methods for the enrichment
+    analysis of gene expression data. This includes support for the efficient
+    execution of these methods on comprehensive real data compendia (microarray
+    and RNA-seq) using parallel computation on standard workstations as well as
+    institutional computer grids. Methods can then be assessed with respect to
+    runtime, statistical significance, and relevance of the results for the
+    investigated phenotypes.
+URL: https://github.com/waldronlab/GSEABenchmarkeR
+BugReports: https://github.com/waldronlab/GSEABenchmarkeR/issues
+License: Artistic-2.0
+Encoding: UTF-8
+LazyData: true
+Depends:
+    R(>= 3.5.0),
+    Biobase,
+    SummarizedExperiment
+Imports:
+    AnnotationHub,
+    BiocParallel,
+    edgeR,
+    EnrichmentBrowser,
+    ExperimentHub,
+    GEOquery,
+    KEGGandMetacoreDzPathwaysGEO,
+    KEGGdzPathwaysGEO,
+    methods,
+    rappdirs,
+    S4Vectors
+Suggests:
+    BiocStyle,
+    BiocCheck,
+    knitr,
+    rmarkdown,
+    testthat
+biocViews:
+    Microarray,
+    RNASeq,
+    GeneExpression,
+    DifferentialExpression,
+    Pathways,
+    GraphAndNetwork,
+    Network,
+    GeneSetEnrichment,
+    NetworkEnrichment,
+    Visualization,
+    ReportWriting
+VignetteBuilder: knitr
