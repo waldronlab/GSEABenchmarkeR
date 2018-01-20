@@ -59,8 +59,22 @@ maPreprocApply <- function(data.ids, parallel=NULL)
 
     anno.pkgs <- unique(anno.pkgs)
     anno.pkgs <- paste(anno.pkgs, "db", sep=".")
+
+    # load the annotation packages
     suppressPackageStartupMessages(
         for(p in anno.pkgs) EnrichmentBrowser::isAvailable(p)
+    )
+
+    # retrieve the mappings
+    suppressMessages(
+        p2g.maps <- sapply(anno.pkgs, 
+            function(anno.pkg)
+            {
+                anno.pkg <- get(anno.pkg) 
+                m <- mapIds(anno.pkg, keys=keys(anno.pkg), 
+                        keytype="PROBEID", column="ENTREZID")
+                return(m)
+            }, simplify=FALSE) 
     )
 
     GRPCOL <- EnrichmentBrowser::config.ebrowser("GRP.COL")
@@ -69,6 +83,8 @@ maPreprocApply <- function(data.ids, parallel=NULL)
     {
         # probe 2 gene & annotation
         id <- experimentData(eset)@name
+        anno <- paste0(annotation(eset), ".db")
+        fData(eset)$ENTREZID <- p2g.maps[[anno]][rownames(eset)] 
         eset <- EnrichmentBrowser::probe.2.gene.eset(eset)
         colnames(colData(eset))[2] <- GRPCOL 
         if(ncol(colData(eset)) > 2) colnames(colData(eset))[3] <- BLKCOL 
