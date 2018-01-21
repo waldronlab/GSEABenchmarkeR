@@ -51,6 +51,10 @@
         Additional arguments passed to \code{EnrichmentBrowser::de.ana}.
     }
 }
+\value{
+    None, \code{deApply} manipulates the datasets loaded in the workspace 
+    and \code{writeDE} writes to file. 
+}
 \details{
     Large-scale DE studies typically report a gene as differentially expressed
     if the corresponding DE p-value, corrected for multiple testing, satisfies 

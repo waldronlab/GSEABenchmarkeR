@@ -71,7 +71,8 @@ maPreprocApply <- function(data.ids, parallel=NULL)
             function(anno.pkg)
             {
                 anno.pkg <- get(anno.pkg) 
-                m <- mapIds(anno.pkg, keys=keys(anno.pkg), 
+                m <- AnnotationDbi::mapIds(anno.pkg, 
+                        keys=AnnotationDbi::keys(anno.pkg), 
                         keytype="PROBEID", column="ENTREZID")
                 return(m)
             }, simplify=FALSE) 

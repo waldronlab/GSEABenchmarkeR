@@ -27,6 +27,9 @@
         execution on the local host. 
     }
 }
+\value{
+    None, the function manipulates the datasets loaded in the workspace.  
+}
 \author{
     Ludwig Geistlinger <Ludwig.Geistlinger@sph.cuny.edu>
 }

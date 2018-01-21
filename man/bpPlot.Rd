@@ -31,6 +31,9 @@
             }
     }
 }
+\value{
+    None. Plots to a graphics device.
+}
 \author{
     Ludwig Geistlinger <Ludwig.Geistlinger@sph.cuny.edu>
 }
