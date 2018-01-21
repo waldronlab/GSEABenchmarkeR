@@ -4,6 +4,7 @@ import("EnrichmentBrowser")
 
 importFrom("S4Vectors", DataFrame)
 importMethodsFrom("S4Vectors", metadata)
+importMethodsFrom("AnnotationDbi", keys, mapIds)
 
 importFrom("grDevices", "dev.off", "pdf", "rainbow")
 importFrom("graphics", "axis", "barplot", "boxplot", "mtext", "par")

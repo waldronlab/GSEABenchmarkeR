@@ -25,6 +25,7 @@ Depends:
     Biobase,
     SummarizedExperiment
 Imports:
+    AnnotationDbi, 
     AnnotationHub,
     BiocParallel,
     edgeR,

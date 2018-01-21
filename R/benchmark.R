@@ -296,18 +296,20 @@ benchmark <- function(
     {
         message("Loading gene sets ...")
         gs <- match.arg(gs)
-        if(gs == "kegg") gs <- EnrichmentBrowser::get.kegg.genesets(org)
-        else gs <- EnrichmentBrowser::get.go.genesets(org, toupper(substring(gs,4,5)))
+        gs <- ifelse(gs == "kegg",
+            EnrichmentBrowser::get.kegg.genesets(org),
+            EnrichmentBrowser::get.go.genesets(org, toupper(substring(gs,4,5))))
     }
 
     # enrichment analysis
     message("Executing EA ...")
 
     # method to execute
-    if(eaType == "sbea") methods <- EnrichmentBrowser::sbea.methods()
-    else if(eaType == "nbea") methods <- EnrichmentBrowser::nbea.methods()
-    else methods <- c(EnrichmentBrowser::sbea.methods(), 
-                        EnrichmentBrowser::nbea.methods()) 
+    methods <- switch(eaType,
+                        sbea = EnrichmentBrowser::sbea.methods(),
+                        nbea = EnrichmentBrowser::nbea.methods(),
+                        c(EnrichmentBrowser::sbea.methods(), 
+                            EnrichmentBrowser::nbea.methods())) 
 
     if(!missing(method)) methods <- union(method, methods)   
 

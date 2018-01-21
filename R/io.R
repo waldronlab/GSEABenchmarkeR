@@ -15,7 +15,6 @@ loadEData <- function(edata, reload=FALSE, nr.datasets=NULL, ...)
     return(data.ids)
 }
 
-
 #
 # loading expression data from file
 #

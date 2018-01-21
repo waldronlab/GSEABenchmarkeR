@@ -15,14 +15,14 @@ bpPlot <- function(data, what=c("runtime", "sig.sets", "rel.sets"))
     names(data) <- substring(names(data), 1, 7)
     data <- data[order(vapply(data, median, numeric(1), na.rm=TRUE))]
 
-    if(what == "runtime")
-    { 
-        data <- lapply(data, log, base=10)    
-        ylab <- "log10 runtime [sec]"
-    }    
-    else if(what == "sig.sets") ylab <- "% significant sets"
-    else if(what == "rel.sets") ylab <- "%opt"
-    else ylab <- what
+    what <- what[1]
+    if(what == "runtime") data <- lapply(data, log, base=10)
+    
+    ylab <- switch(what,
+                    runtime = "log10 runtime [sec]",
+                    sig.sets = "% significant sets",
+                    rel.sets = "%opt",
+                    what)
 
     par(las=2)
     boxplot(data, col=rainbow(length(data)), ylab=ylab)
@@ -36,8 +36,8 @@ plotOverallRankDistrib <- function(k, best="max", ylab="%opt")
     colnames(k) <- substring(colnames(k), 1, 7)
     boxplot(k, col=rainbow(11), ylab=ylab)
     par(las=1)
-    if(best == "max") sel <- apply(k, 1, which.max)
-    else sel <- apply(k, 1, which.min)
+    f <- ifelse(best == "max", which.max, which.min)
+    sel <- apply(k, 1, f)
     best <- colnames(k)[sel]
     axis(3, at=seq_len(ncol(k)), 
         labels=vapply(colnames(k), function(n) sum(best==n), integer(1)))
