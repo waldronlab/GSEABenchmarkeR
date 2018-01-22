@@ -4,6 +4,8 @@ language: R
 sudo: false
 cache: packages
 r: bioc-devel
+r_build_args: --keep-empty-dirs --no-resave-data --no-build-vignettes
+r_check_args: --no-build-vignettes --timings --no-examples
 
 after_success:
   - Rscript -e 'BiocCheck::BiocCheck(".")'
