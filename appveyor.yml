@@ -16,9 +16,12 @@ cache:
 # Adapt as necessary starting from here
 
 environment:
+    r_version: devel
     r_arch: x64
     use_rtools: true
-    bioc_use_devel: TRUE
+    bioc_use_devel: true
+    r_build_args: --keep-empty-dirs --no-resave-data
+    r_check_args: --no-vignettes --timings
 
 build_script:
   - travis-tool.sh install_deps
