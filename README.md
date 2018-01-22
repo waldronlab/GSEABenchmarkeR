@@ -3,6 +3,8 @@
 ![fa-windows](http://fa2png.io/media/icons/font-awesome/4-7-0/windows/20/0/2c3e50_none.png)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/waldronlab/GSEABenchmarkeR?branch=master&svg=true)](https://ci.appveyor.com/project/waldronlab/GSEABenchmarkeR)
 
+[![Build status](https://ci.appveyor.com/api/projects/status/og5wc5bmcufe9iux?svg=true)](https://ci.appveyor.com/project/lgeistlinger/gseabenchmarker)
+
 
 # GSEABenchmarkeR
 
