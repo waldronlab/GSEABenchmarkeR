@@ -56,3 +56,4 @@ biocViews:
     Visualization,
     ReportWriting
 VignetteBuilder: knitr
+RoxygenNote: 6.0.1
