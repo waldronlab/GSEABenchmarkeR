@@ -28,7 +28,7 @@
 evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 { 
     pcol <- EnrichmentBrowser::config.ebrowser("GSP.COL")  
-	res <- sapply(ea.ranks, 
+    res <- sapply(ea.ranks, 
 		function(rs) vapply(rs, 
 			function(r) 
             {

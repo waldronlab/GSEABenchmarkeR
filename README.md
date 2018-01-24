@@ -1,8 +1,3 @@
-![fa-linux](http://fa2png.io/media/icons/font-awesome/4-7-0/linux/20/0/2c3e50_none.png) 
-[![Travis-CI Build Status](https://travis-ci.org/waldronlab/GSEABenchmarkeR.svg?branch=master)](https://travis-ci.org/waldronlab/GSEABenchmarkeR)
-![fa-windows](http://fa2png.io/media/icons/font-awesome/4-7-0/windows/20/0/2c3e50_none.png)
-[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/og5wc5bmcufe9iux?svg=true)](https://ci.appveyor.com/project/lgeistlinger/gseabenchmarker)
-
 
 # GSEABenchmarkeR
 
@@ -17,7 +12,7 @@ investigated phenotypes.
     
 ## Installation
 
-You can install GSEABenchmarkeR from github with:
+You can install the *GSEABenchmarkeR* package from GitHub with:
 
 
 ``` r
@@ -25,10 +20,3 @@ You can install GSEABenchmarkeR from github with:
 devtools::install_github("waldronlab/GSEABenchmarkeR")
 ```
 
-## Example
-
-This is a basic example which shows you how to solve a common problem:
-
-``` r
-## basic example code
-```
