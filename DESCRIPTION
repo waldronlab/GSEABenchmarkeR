@@ -1,20 +1,25 @@
 Package: GSEABenchmarkeR
 Type: Package
 Title: Reproducible GSEA Benchmarking
-Version: 0.99.1
+Version: 0.99.0
 Author:
-    Ludwig Geistlinger <ludwig.geistlinger@sph.cuny.edu>,
-    Lucas Schiffer <schiffer.lucas@gmail.com>
+    Ludwig Geistlinger [aut, cre],
+    Gergely Csaba [aut],
+    Mara Santarelli [ctb],
+    Lucas Schiffer [ctb],
+    Marcel Ramos [ctb],
+    Levi Waldron [ctb],
+    Ralf Zimmer [aut],
 Maintainer: Ludwig Geistlinger <Ludwig.Geistlinger@sph.cuny.edu>
 Description:
-    The GSEABenchmarkeR package implements an extendable framework for the
-    reproducible evaluation of set- and network-based methods for the enrichment
+    The GSEABenchmarkeR package implements an extendable framework for
+    reproducible evaluation of set- and network-based methods for enrichment
     analysis of gene expression data. This includes support for the efficient
     execution of these methods on comprehensive real data compendia (microarray
-    and RNA-seq) using parallel computation on standard workstations as well as
+    and RNA-seq) using parallel computation on standard workstations and
     institutional computer grids. Methods can then be assessed with respect to
     runtime, statistical significance, and relevance of the results for the
-    investigated phenotypes.
+    phenotypes investigated.
 URL: https://github.com/waldronlab/GSEABenchmarkeR
 BugReports: https://github.com/waldronlab/GSEABenchmarkeR/issues
 License: Artistic-2.0

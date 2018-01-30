@@ -28,8 +28,18 @@ bpPlot <- function(data, what=c("runtime", "sig.sets", "rel.sets"))
     boxplot(data, col=rainbow(length(data)), ylab=ylab)
 }
 
+plotDEDistribution <- function(data.ids, alpha=0.05, beta=1)
+{
+    .f <- function(i) .fractDE(i, alpha=alpha, beta=beta)
+    x <- .iter(.f, data.ids)
+    x <- do.call(cbind, x)
+    plot(x=x["fc",],y=x["p",], 
+        xlab="%[abs(log2FC) > 1]", ylab="%[adjp < 0.05]", col="white")
+    text(x=x["fc",], y=x["p",], colnames(x), cex=0.7)
+}
+
 # plots aggregated relscoresum distribution of enrichment methods over all datasets
-plotOverallRankDistrib <- function(k, best="max", ylab="%opt")
+.plotOverallRankDistrib <- function(k, best="max", ylab="%opt")
 {
     k <- k[,order(apply(k,2,median, na.rm=TRUE), decreasing=(best=="max"))]
     par(las=2)
@@ -45,7 +55,7 @@ plotOverallRankDistrib <- function(k, best="max", ylab="%opt")
 }
 
 # barplot relscores of enrichment methods per dataset
-barplotRelScores <- function(x, file)
+.barplotRelScores <- function(x, file)
 {
     opt <- x[,"opt"]
     x <- x[,-ncol(x)]
@@ -60,7 +70,7 @@ barplotRelScores <- function(x, file)
     dev.off()
 }
 
-compRankDistrib <- function(x)
+.compRankDistrib <- function(x)
 {
     res <- apply(x, 1, 
         function(l) 

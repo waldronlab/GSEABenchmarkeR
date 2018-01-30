@@ -25,6 +25,7 @@ export(
     getDataset,
     loadEData,
     maPreprocApply,
+    plotDEDistribution,
     readDataId2diseaseCodeMap,
     readRankings,
     readRuntime,

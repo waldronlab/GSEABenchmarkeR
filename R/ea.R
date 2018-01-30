@@ -40,10 +40,12 @@ deApply <- function(data.ids,
     
     if(freq == "rel")
     { 
-        fract.p <- fract.p / nrow(eset)
-        fract.fc <- fract.fc / nrow(eset)
+        fract.p <- fract.p / nrow(eset) * 100
+        fract.fc <- fract.fc / nrow(eset) * 100
     }
-    return(list(fp=fract.p, ffc=fract.fc))
+    res <- c(fract.p, fract.fc)
+    names(res) <- c("p", "fc")
+    return(res)
 }
 
 #
