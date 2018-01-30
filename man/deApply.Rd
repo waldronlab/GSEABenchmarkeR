@@ -1,6 +1,7 @@
 \name{deApply}
 \alias{deApply}
 \alias{writeDE}
+\alias{plotDEDistribution}
 \title{ 
     Differential expression analysis for datasets of a compendium
 }
@@ -12,7 +13,9 @@
     deApply( data.ids, 
                 de.method=c("limma", "edgeR", "DESeq"), 
                 padj.method="flexible", parallel=NULL, ... )
-
+    
+    plotDEDistribution( data.ids, alpha=0.05, beta=1 )
+    
     writeDE( data.ids, out.dir=NULL )
 }
 \arguments{
@@ -40,6 +43,12 @@
         If not changed by the user, this accordingly defaults to multi-core
         execution on the local host. 
     }
+    \item{alpha}{
+        Statistical significance level. Defaults to 0.05.
+    }   
+    \item{beta}{ 
+        Absolute log2 fold change cut-off. Defaults to 1 (2-fold).
+    }
     \item{out.dir}{
         Character.
         Determines the output directory where DE results for each
@@ -52,8 +61,9 @@
     }
 }
 \value{
-    None, \code{deApply} manipulates the datasets loaded in the workspace 
-    and \code{writeDE} writes to file. 
+    None; \code{deApply} manipulates the datasets loaded in the workspace,
+    \code{writeDE} writes to file, and \code{plotDEDistribution} plots to a 
+    graphics device.
 }
 \details{
     DE studies typically report a gene as differentially expressed
@@ -108,12 +118,14 @@
     deApply(data.ids)
     se <- getDataset(data.ids[1])
 
+    # visualization of per-dataset DE distribution
+    plotDEDistribution(data.ids)
+
     # writing DE results to file
     out.dir <- tempdir()
     out.dir <- file.path(out.dir, "de")
     if(!file.exists(out.dir)) dir.create(out.dir)
  
     writeDE(data.ids, out.dir)    
-
 }   
 

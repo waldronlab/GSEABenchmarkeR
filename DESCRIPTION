@@ -37,11 +37,15 @@ Imports:
     EnrichmentBrowser,
     ExperimentHub,
     GEOquery,
+    grDevices,
+    graphics,
     KEGGandMetacoreDzPathwaysGEO,
     KEGGdzPathwaysGEO,
     methods,
     rappdirs,
     S4Vectors
+    stats,
+    utils
 Suggests:
     BiocStyle,
     BiocCheck,

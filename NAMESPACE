@@ -1,12 +1,15 @@
 import("Biobase")
 import("SummarizedExperiment")
 import("EnrichmentBrowser")
+import("KEGGdzPathwaysGEO")
+import("KEGGandMetacoreDzPathwaysGEO")
 
 importFrom("S4Vectors", DataFrame)
 importMethodsFrom("S4Vectors", metadata)
 
 importFrom("grDevices", "dev.off", "pdf", "rainbow")
-importFrom("graphics", "axis", "barplot", "boxplot", "mtext", "par")
+importFrom("graphics", "axis", "barplot", "boxplot", 
+                        "mtext", "par", "plot", "text")
 importFrom("methods", "is")
 importFrom("stats", "median", "p.adjust")
 importFrom("utils", "data", "read.delim", "setTxtProgressBar",
