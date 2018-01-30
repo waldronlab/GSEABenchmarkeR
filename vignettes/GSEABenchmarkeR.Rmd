@@ -328,7 +328,7 @@ In case of unexpected errors, this also allows resumption from the point of fail
 # Benchmarking
 
 Once methods have been applied to a chosen benchmark compendium, they can be 
-subjected to a comparative assessment of runtime, statistical significance
+subjected to a comparative assessment of runtime, statistical significance,
 and phenotype relevance. 
 
 To demonstrate how each criterion can be evaluated, we consider the example of 
@@ -503,8 +503,6 @@ ea.ranks$ora$GSE1297
 obs.score <- evalRanks(ea.ranks$ora$GSE1297, mala.kegg$ALZ)
 obs.score
 ```
-
-TODO: connection to next section, especially that there is nothing to conclude.
 
 ### Random relevance score distribution
 
