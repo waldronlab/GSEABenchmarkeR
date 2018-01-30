@@ -56,22 +56,19 @@
     and \code{writeDE} writes to file. 
 }
 \details{
-    Large-scale DE studies typically report a gene as differentially expressed
+    DE studies typically report a gene as differentially expressed
     if the corresponding DE p-value, corrected for multiple testing, satisfies 
     the chosen significance level.
-    In this case, the method used for multiple testing correction can substantially 
-    influence the performance of enrichment methods that work directly on the list of
-    DE genes.
-
+    Enrichment methods that work directly on the list of DE genes are then 
+    substantially influenced by the multiple testing correction. 
+   
     An example is the frequently used over-representation analysis (ORA), which 
     assesses the overlap between the DE genes and a gene set under study based
     on the hypergeometric distribution (see Appendix A of the 
     \code{EnrichmentBrowser} vignette for an introduction).
 
-    In the extreme case, where there are no, or only a few, genes satisfying the 
-    significance threshold, this can even render ORA inapplicable.
-    On the other hand, application of ORA is useless if almost all genes turn out to  
-    be DE. 
+    ORA is inapplicable if there are few genes satisfying the significance 
+    threshold, or if almost all genes are DE. 
 
     Using \code{padj.method="flexible"} accounts for these cases by applying 
     multiple testing correction in dependence on the degree of differential 
@@ -88,9 +85,9 @@
 
     Note that resulting p-values should not be used for assessing the 
     statistical significance of DE genes within or between datasets. 
-    The intended use is to determine which genes to include in the analysis
-    with ORA - and thus to ensure that the fraction of included genes is 
-    roughly in the same order of magnitude across datasets. 
+    They are solely used to determine which genes are included in the analysis
+    with ORA - where the flexible correction ensures that the fraction
+    of included genes is roughly in the same order of magnitude across datasets.
     
     Alternative stratgies could also be applied - such as taking a constant 
     number of genes for each dataset or excluding ORA methods in general from 

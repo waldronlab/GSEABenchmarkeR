@@ -9,7 +9,7 @@ Author:
     Lucas Schiffer [ctb],
     Marcel Ramos [ctb],
     Levi Waldron [ctb],
-    Ralf Zimmer [aut],
+    Ralf Zimmer [aut]
 Maintainer: Ludwig Geistlinger <Ludwig.Geistlinger@sph.cuny.edu>
 Description:
     The GSEABenchmarkeR package implements an extendable framework for
