@@ -12,9 +12,9 @@
 #
 .iter <- function(f, data.ids, parallel=NULL)
 {
-    .f <- function(id) f(getDataset(id))
-
     if(!is.null(parallel)) BiocParallel::register(parallel)
+    
+    .f <- function(id) f(getDataset(id))
     res <- BiocParallel::bplapply(data.ids, .f)
     names(res) <- data.ids
     return(res)

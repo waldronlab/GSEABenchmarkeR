@@ -114,10 +114,10 @@
 }
 \examples{
     # (1) Loading the GEO2KEGG microarray compendium
-    ma.ids <- loadEData("geo2kegg")
+    ma.ids <- loadEData("geo2kegg", nr.datasets=2)
 
     # (2) Loading the TCGA RNA-seq compendium
-    rseq.ids <- loadEData("tcga")
+    rseq.ids <- loadEData("tcga", nr.datasets=2)
 
     # (3) reading user-defined expression data from file
     data.dir <- system.file("extdata/myEData", package="GSEABenchmarkeR")
