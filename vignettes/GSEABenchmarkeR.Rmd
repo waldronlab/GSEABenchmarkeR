@@ -593,17 +593,17 @@ parameters of class `BiocParallelParam` can either directly be registered via
 `BiocParallel::register`, or supplied with the `parallel` argument of the
 *Apply*-functions.
 
-For demonstration, we configure here a `MulticoreParam` to display a progress bar
+For demonstration, we configure here a `BiocParallelParam` to display a progress bar
 
 ```{r bpParam}
-mc.par <- BiocParallel::registered()$MulticoreParam
-BiocParallel::bpprogressbar(mc.par) <- TRUE
+bp.par <- BiocParallel::registered()[[1]]
+BiocParallel::bpprogressbar(bp.par) <- TRUE
 ```
 
 and supply `deApply` with the updated computation parameter.
 
 ```{r deApplyBP}
-deApply(ma.ids[1:4], parallel=mc.par)
+deApply(ma.ids[1:4], parallel=bp.par)
 ```
 
 Users that would like to use distributed computation, on e.g. an institutional 
