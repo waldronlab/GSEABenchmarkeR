@@ -38,10 +38,10 @@
 }
 \examples{
     # reading user-defined expression data from file
-    data.ids <- loadEData("geo2kegg")
+    data.ids <- loadEData("geo2kegg", nr.datasets=3)
 
-    # preprocessing the first two datasets
-    maPreprocApply(data.ids[1:2])
-    se <- getDataset(data.ids[1])
+    # preprocessing two datasets
+    maPreprocApply(data.ids[2:3])
+    se <- getDataset(data.ids[2])
 }   
 

@@ -12,6 +12,8 @@
 #
 .iter <- function(f, data.ids, parallel=NULL)
 {
+    if(.Platform$OS.type == "windows") 
+        parallel <- BiocParallel::SerialParam()
     if(!is.null(parallel)) BiocParallel::register(parallel)
     
     .f <- function(id) f(getDataset(id))
