@@ -112,9 +112,8 @@ runEA <- function(se, method, gs, save2file=FALSE, out.dir=NULL, ...)
     {
         if(is.null(out.dir)) 
             out.dir <- rappdirs::user_data_dir("GSEABenchmarkeR")
-        if(!file.exists(out.dir)) dir.create(out.dir)
         out.dir <- file.path(out.dir, method)
-        if(!file.exists(out.dir)) dir.create(out.dir)
+        if(!file.exists(out.dir)) dir.create(out.dir, recursive=TRUE)
 
         out.file <- file.path(out.dir, paste0(id, ".rds"))
         saveRDS(res, file=out.file)

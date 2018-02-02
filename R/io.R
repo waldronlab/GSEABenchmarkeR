@@ -53,7 +53,7 @@ writeDE <- function(data.ids, out.dir=NULL)
         if(!file.exists(out.dir)) 
         out.dir <- file.path(out.dir, "de")
     }
-    if(!file.exists(out.dir)) dir.create(out.dir)
+    if(!file.exists(out.dir)) dir.create(out.dir, recursive=TRUE)
     .f <- function(xx)
     {
         gt.file <- paste0(metadata(xx)$dataId, ".txt")

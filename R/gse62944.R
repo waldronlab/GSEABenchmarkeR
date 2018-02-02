@@ -142,8 +142,7 @@
 .splitByCancerType <- function(tum, norm, 
     nr.datasets, data.dir, min.ctrls=9, min.cpm=2)
 {
-    if(!file.exists(dirname(data.dir))) dir.create(dirname(data.dir))
-    if(!file.exists(data.dir)) dir.create(data.dir)
+    if(!file.exists(data.dir)) dir.create(data.dir, recursive=TRUE)
     # map IDs hgnc -> entrez
     tum <- EnrichmentBrowser::map.ids(tum, org="hsa", from="SYMBOL", to="ENTREZID")
     norm <- EnrichmentBrowser::map.ids(norm, org="hsa", from="SYMBOL", to="ENTREZID")
