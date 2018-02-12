@@ -8,12 +8,14 @@
     to selected datasets of a compendium.
 }
 \usage{
-    eaApply( data.ids, methods, gs, 
+    eaApply( exp.list, methods, gs, 
                 parallel=NULL, save2file=FALSE, out.dir=NULL, ... )
 }
 \arguments{
-    \item{data.ids}{
-        A character vector of dataset IDs.
+    \item{exp.list}{
+        Experiment list.
+        A \code{list} of datasets, each being of class 
+        \code{\linkS4class{ExpressionSet}}.
     }
     \item{methods}{
         Methods for enrichment analysis.
@@ -69,18 +71,18 @@
 }
 \examples{
     # loading two datasets from the GEO2KEGG compendium
-    data.ids <- loadEData("geo2kegg", nr.datasets=2)
+    geo2kegg <- loadEData("geo2kegg", nr.datasets=2)
 
     # preprocessing and DE analysis
-    maPreprocApply(data.ids)
-    deApply(data.ids)
+    geo2kegg <- maPreprocApply(geo2kegg)
+    geo2kegg <- deApply(geo2kegg)
 
     # getting a subset of human KEGG gene sets
     gs.file <- system.file("extdata/hsa_kegg_gs.gmt", package="EnrichmentBrowser")
     kegg.gs <- EnrichmentBrowser::parse.genesets.from.GMT(gs.file)
 
     # applying two methods to two datasets 
-    res <- eaApply(data.ids, methods=c("ora", "camera"), gs=kegg.gs)
+    res <- eaApply(geo2kegg, methods=c("ora", "camera"), gs=kegg.gs)
     
 }   
 

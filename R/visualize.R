@@ -28,10 +28,9 @@ bpPlot <- function(data, what=c("runtime", "sig.sets", "rel.sets"))
     boxplot(data, col=rainbow(length(data)), ylab=ylab)
 }
 
-plotDEDistribution <- function(data.ids, alpha=0.05, beta=1)
+plotDEDistribution <- function(exp.list, alpha=0.05, beta=1)
 {
-    .f <- function(i) .fractDE(i, alpha=alpha, beta=beta)
-    x <- .iter(.f, data.ids)
+    x <- lapply(exp.list, function(i) .fractDE(i, alpha=alpha, beta=beta))
     x <- do.call(cbind, x)
     plot(x=x["fc",],y=x["p",], 
         xlab="%[abs(log2FC) > 1]", ylab="%[adjp < 0.05]", col="white")

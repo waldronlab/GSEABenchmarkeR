@@ -10,11 +10,13 @@
     colData slots for sample grouping.
 }
 \usage{
-    maPreprocApply( data.ids, parallel=NULL )
+    maPreprocApply( exp.list, parallel=NULL )
 }
 \arguments{
-    \item{data.ids}{
-        A character vector of dataset IDs.
+    \item{exp.list}{
+        Experiment list.
+        A \code{list} of datasets, each being of class 
+        \code{\linkS4class{ExpressionSet}}.
     }
     \item{parallel}{
         Parallel computation mode.
@@ -28,7 +30,8 @@
     }
 }
 \value{
-    None, the function manipulates the datasets loaded in the workspace.  
+    A \code{list} of datasets, each being of class 
+    \code{\linkS4class{SummarizedExperiment}}.
 }
 \author{
     Ludwig Geistlinger <Ludwig.Geistlinger@sph.cuny.edu>
@@ -38,10 +41,9 @@
 }
 \examples{
     # reading user-defined expression data from file
-    data.ids <- loadEData("geo2kegg", nr.datasets=3)
+    geo2kegg <- loadEData("geo2kegg", nr.datasets=3)
 
     # preprocessing two datasets
-    maPreprocApply(data.ids[2:3])
-    se <- getDataset(data.ids[2])
+    geo2kegg <- maPreprocApply(geo2kegg[2:3])
 }   
 

@@ -1,7 +1,7 @@
 #
 # DE analysis
 #
-deApply <- function(data.ids, 
+deApply <- function(exp.list, 
     de.method=c("limma", "edgeR", "DESeq"), 
     padj.method="flexible", parallel=NULL, ...)
 {
@@ -24,9 +24,12 @@ deApply <- function(data.ids,
         }
         return(se)
     }
+   
+    # parallel execution
+    if(!is.null(parallel)) BiocParallel::register(parallel)
+    exp.list <- BiocParallel::bplapply(exp.list, .f)
     
-    esets <- .iter(.f, data.ids, parallel)
-    for(d in data.ids) .EDATA[[d]] <- esets[[d]]
+    return(exp.list)
 }
 
 .fractDE <- function(eset, alpha=0.05, beta=1, freq=c("rel", "abs"))
@@ -52,16 +55,17 @@ deApply <- function(data.ids,
 # Enrichment analyis
 #
 
-eaApply <- function(data.ids, methods, gs, 
+eaApply <- function(exp.list, methods, gs, 
     parallel=NULL, save2file=FALSE, out.dir=NULL, ...)
 { 
+    if(!is.null(parallel)) BiocParallel::register(parallel)
     res <- lapply(methods, 
         function(m)
         {
             message(m)
-            f <- function(i) runEA(i, 
+            .f <- function(i) runEA(i, 
                 method=m, gs=gs, save2file=save2file, out.dir=out.dir, ...)
-            r <- .iter(f, data.ids, parallel)
+            r <- BiocParallel::bplapply(exp.list, .f)
             return(r)
         }
     )    

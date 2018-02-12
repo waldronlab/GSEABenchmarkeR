@@ -1,16 +1,12 @@
-.EDATA <- new.env(parent=emptyenv())
-
-getDataset <- function(data.id) .EDATA[[data.id]]
-
 #
 # loading expression data 
 #
-loadEData <- function(edata, reload=FALSE, nr.datasets=NULL, ...)
+loadEData <- function(edata, nr.datasets=NULL, ...)
 {
-    if(edata=="geo2kegg") data.ids <- .loadGEO2KEGG(reload, nr.datasets, ...)
-    else if(edata=="tcga") data.ids <- .loadTCGA(reload, nr.datasets, ...)
+    if(edata=="geo2kegg") data.ids <- .loadGEO2KEGG(nr.datasets, ...)
+    else if(edata=="tcga") data.ids <- .loadTCGA(nr.datasets, ...)
     else if(file.exists(edata)) 
-        data.ids <- .loadEDataFromFile(edata, reload, nr.datasets)
+        data.ids <- .loadEDataFromFile(edata, nr.datasets)
     else stop("edata must be \'geo2kegg\', \'tcga\' or an absolute file path")
     return(data.ids)
 }
@@ -18,39 +14,34 @@ loadEData <- function(edata, reload=FALSE, nr.datasets=NULL, ...)
 #
 # loading expression data from file
 #
-.loadEDataFromFile <- function(edata, reload=FALSE, nr.datasets=NULL)
+.loadEDataFromFile <- function(edata, nr.datasets=NULL)
 {
     data.ids <- sub(".rds$", "", list.files(edata, pattern="*.rds$"))
     if(!is.null(nr.datasets)) data.ids <- data.ids[seq_len(nr.datasets)]
-    is.loaded <- all(vapply(data.ids, exists, logical(1), envir=.EDATA))
-    if(!is.loaded || reload)
-    {
-        # message("Loading user-defined data compendium ...")
-        # message(paste("... from", edata))
-        if(interactive())
-            pb <- txtProgressBar(1, length(data.ids), style=3, width=length(data.ids))
-        for(did in data.ids)
+    if(interactive())
+        pb <- txtProgressBar(1, length(data.ids), style=3, width=length(data.ids))
+    exp.list <- lapply(data.ids,
+        function(id)
         {
-            dfile <- file.path(edata, paste(did, "rds", sep="."))
+            dfile <- file.path(edata, paste(id, "rds", sep="."))
             se <- readRDS(dfile)
-            metadata(se)$dataId <- did 
-            .EDATA[[did]] <- se
-            if(interactive()) setTxtProgressBar(pb, match(did, data.ids))
-        }
-        if(interactive()) close(pb)
-    }
-    return(data.ids)
+            metadata(se)$dataId <- id 
+            if(interactive()) setTxtProgressBar(pb, match(id, data.ids))
+            return(se)
+        })
+    names(exp.list) <- data.ids
+    if(interactive()) close(pb)
+    return(exp.list)
 }
 
 #
 # write differential expression per dataset
 #
-writeDE <- function(data.ids, out.dir=NULL)
+writeDE <- function(exp.list, out.dir=NULL)
 {
     if(is.null(out.dir))
     {
         out.dir <- rappdirs::user_data_dir("GSEABenchmarkeR")
-        if(!file.exists(out.dir)) 
         out.dir <- file.path(out.dir, "de")
     }
     if(!file.exists(out.dir)) dir.create(out.dir, recursive=TRUE)
@@ -64,7 +55,7 @@ writeDE <- function(data.ids, out.dir=NULL)
         ind <- gt[,config.ebrowser("EZ.COL")]      
         write.table(gt, file=gt.file, row.names=FALSE, quote=FALSE, sep="\t")
     }
-    .iter(.f, data.ids)
+    invisible(lapply(exp.list, .f))
 }
 
 #

@@ -12,50 +12,52 @@
 #
 # loading geo2kegg benchmark compendium
 #
-.loadGEO2KEGG <- function(reload=FALSE, nr.datasets=NULL,
-                            preproc=FALSE, de.only=FALSE, excl.metac=FALSE)
+.loadGEO2KEGG <- function(nr.datasets=NULL, 
+                            preproc=FALSE, 
+                            de.only=FALSE, 
+                            excl.metac=FALSE)
 {
     data.ids <- .getGeo2KeggIds(de.only, excl.metac)
     if(!is.null(nr.datasets)) data.ids <- data.ids[seq_len(nr.datasets)]
-    isLoaded <- all(vapply(data.ids, exists, logical(1), envir=.EDATA))
-    if(!isLoaded || reload)
-    {
-        message("Loading GEO2KEGG data compendium ...")
-        
-        # already on disk?
-        data.dir <- rappdirs::user_data_dir("GSEABenchmarkeR")
-        gse.dir <- file.path(data.dir, "GEO2KEGG")
-        if(file.exists(gse.dir))
-        {        
-            message("Found GEO2KEGG compendium on disk. Loading from file ...")
-            eids <- .loadEDataFromFile(gse.dir, nr.datasets=nr.datasets)
-            if(all(data.ids %in% eids)) return(data.ids)
-        }
-        
-        # if not, create from package
-        geoIds1 <- data(package="KEGGdzPathwaysGEO")$results[,"Item"]
-        if(interactive()) 
-            pb <- txtProgressBar(1, length(data.ids), style=3, width=length(data.ids))
-        for(did in data.ids) 
+    message("Loading GEO2KEGG data compendium ...")
+    
+    # already on disk?
+    data.dir <- rappdirs::user_data_dir("GSEABenchmarkeR")
+    gse.dir <- file.path(data.dir, "GEO2KEGG")
+    if(file.exists(gse.dir))
+    {        
+        message("Found GEO2KEGG compendium on disk. Loading from file ...")
+        eids <- .loadEDataFromFile(gse.dir, nr.datasets=nr.datasets)
+        if(all(data.ids %in% eids)) return(data.ids)
+    }
+    
+    # if not, create from package
+    geoIds1 <- data(package="KEGGdzPathwaysGEO")$results[,"Item"]
+    if(interactive()) 
+        pb <- txtProgressBar(1, length(data.ids), style=3, width=length(data.ids))
+
+    .EDATA <- environment()
+    el <- lapply(data.ids, 
+        function(id) 
         {
             # load
-            add <- ifelse(did %in% geoIds1, "d", "andMetacoreD")
+            add <- ifelse(id %in% geoIds1, "d", "andMetacoreD")
             pkg <- paste0("KEGG", add, "zPathwaysGEO")
-            data(list=did, package=pkg, envir=.EDATA)
-            if(interactive()) setTxtProgressBar(pb, match(did, data.ids))
-        }    
-        if(interactive()) close(pb)
-        if(preproc) maPreprocApply(data.ids)
-    }
-    return(data.ids)
+            data(list=id, package=pkg, envir=.EDATA)
+            if(interactive()) setTxtProgressBar(pb, match(id, data.ids))
+            return(.EDATA[[id]])
+        })
+    if(interactive()) close(pb)
+    names(el) <- data.ids
+
+    if(preproc) el <- maPreprocApply(data.ids)
+    return(el)
 }
 
-maPreprocApply <- function(data.ids, parallel=NULL)
+maPreprocApply <- function(exp.list, parallel=NULL)
 {
     message("Summarizing probe level expression ...")
-    anno.pkgs <- vapply(data.ids, 
-                    function(i) annotation(getDataset(i)), 
-                    character(1))
+    anno.pkgs <- vapply(exp.list, annotation, character(1))
 
     anno.pkgs <- unique(anno.pkgs)
     anno.pkgs <- paste(anno.pkgs, "db", sep=".")
@@ -78,6 +80,7 @@ maPreprocApply <- function(data.ids, parallel=NULL)
             }, simplify=FALSE) 
     )
 
+    # helper function doing the actual job per expression set
     GRPCOL <- EnrichmentBrowser::config.ebrowser("GRP.COL")
     BLKCOL <- EnrichmentBrowser::config.ebrowser("BLK.COL")
     .pre <- function(eset)
@@ -95,8 +98,12 @@ maPreprocApply <- function(data.ids, parallel=NULL)
         metadata(eset)$annotation <- "hsa"
         return(eset) 
     }
-    esets <- .iter(.pre, data.ids, parallel)
-    for (d in data.ids) .EDATA[[d]] <- esets[[d]] 
+
+    # parallel execution
+    if(!is.null(parallel)) BiocParallel::register(parallel)
+    exp.list <- BiocParallel::bplapply(exp.list, .pre)
+    
+    return(exp.list)
 }
 
 #

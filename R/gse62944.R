@@ -11,12 +11,10 @@
 #
 # load TCGA compendium
 #
-.loadTCGA <- function(reload=FALSE, nr.datasets=NULL,
+.loadTCGA <- function(nr.datasets=NULL,
                         mode=c("ehub", "geo"), data.dir=NULL,
                         min.ctrls=9, min.cpm=2, with.clin.vars=FALSE)
 {
-    if(exists("tcgaIds", envir=.EDATA) && !reload) return(.EDATA[["tcgaIds"]])
-
     # output data directory
     if(is.null(data.dir))
         data.dir <- rappdirs::user_data_dir("GSEABenchmarkeR")
@@ -26,7 +24,7 @@
     if(file.exists(gse.dir))
     {
         message("Found GSE62944 on disk. Loading from file ...")
-        data.ids <- .loadEDataFromFile(gse.dir, nr.datasets=nr.datasets)
+        exp.list <- .loadEDataFromFile(gse.dir, nr.datasets=nr.datasets)
     }
     # otherwise download it
     else
@@ -34,11 +32,11 @@
         mode <- match.arg(mode)
         if(mode == "ehub") dat <- .retrieveGSE62944FromEHub(with.clin.vars)
         else dat <- .downloadGSE62944(data.dir, with.clin.vars)
-        data.ids <- .splitByCancerType(dat$tum, dat$norm, nr.datasets,
+        exp.list <- .splitByCancerType(dat$tum, dat$norm, nr.datasets,
             data.dir=gse.dir, min.ctrls=min.ctrls, min.cpm=min.cpm)
     }
      
-    return(data.ids)
+    return(exp.list)
 }
 
 #
@@ -163,30 +161,31 @@
     message(paste(rel.cts, collapse=", "))
     message("Creating a SummarizedExperiment for each of them ...")
 
-    for(ct in rel.cts) 
-    {
-        message(paste(ct, "tumor:", tum.cts[ct], "adj.normal:", norm.cts[ct]))
+    exp.list <- lapply(rel.cts,
+        function(ct) 
+        {
+            message(paste(ct, "tumor:", tum.cts[ct], "adj.normal:", norm.cts[ct]))
 
-        ctrls <- norm[, norm$type == ct]
-        cases <- tum[, tum$type == ct]
+            ctrls <- norm[, norm$type == ct]
+            cases <- tum[, tum$type == ct]
 
-        se <- cbind(cases, ctrls) 
-        colData(se)$GROUP <- c( rep(1, ncol(cases)), rep(0, ncol(ctrls)) )
-        metadata(se)$dataId <- ct 
-        metadata(se)$annotation <- "hsa"
-        metadata(se)$dataType <- "rseq"
+            se <- cbind(cases, ctrls) 
+            colData(se)$GROUP <- c( rep(1, ncol(cases)), rep(0, ncol(ctrls)) )
+            metadata(se)$dataId <- ct 
+            metadata(se)$annotation <- "hsa"
+            metadata(se)$dataType <- "rseq"
 
-        # preprocessing
-        # rm genes with all 0 and less than min.reads
-        rs <- rowSums(edgeR::cpm(assay(se)) > min.cpm)
-        keep <-  rs >= ncol(se) / 2
-        se <- se[keep,]
+            # preprocessing
+            # rm genes with all 0 and less than min.reads
+            rs <- rowSums(edgeR::cpm(assay(se)) > min.cpm)
+            keep <-  rs >= ncol(se) / 2
+            se <- se[keep,]
    
-        out.file <- paste(ct, "rds", sep=".")
-        out.file <- file.path(data.dir, out.file) 
-        saveRDS(se, file=out.file)
-        .EDATA[[ct]] <- se
-    }
-    .EDATA[["tcgaIds"]] <- rel.cts
-    return(rel.cts)
+            out.file <- paste(ct, "rds", sep=".")
+            out.file <- file.path(data.dir, out.file) 
+            saveRDS(se, file=out.file)
+            return(se)
+        })
+    names(exp.list) <- rel.cts
+    return(exp.list)
 }

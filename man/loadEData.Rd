@@ -10,7 +10,7 @@
 }
 \usage{
 
-    loadEData( edata, reload=FALSE, nr.datasets=NULL, ... )
+    loadEData( edata, nr.datasets=NULL, ... )
 }
 \arguments{
     \item{edata}{
@@ -23,13 +23,6 @@
             user-defined compendium has been saved in RDS files. 
         }   
         See details.
-    }
-    \item{reload}{
-        Logical.
-        If the chosen compendium has already been loaded into the workspace, 
-        should it be reloaded, thereby resetting all changes performed to the 
-        compendium during the current R session?
-        Defaults to FALSE.
     }
     \item{nr.datasets}{
         Integer.
@@ -70,7 +63,8 @@
     }
 }
 \value{
-    A character vector of dataset IDs.
+    A \code{list} of datasets, typically of class 
+    \code{\linkS4class{SummarizedExperiment}}.
 }
 \details{
     The pre-defined GEO2KEGG microarray compendium consists of 42 datasets 
@@ -107,20 +101,17 @@
     Ludwig Geistlinger <Ludwig.Geistlinger@sph.cuny.edu>
 }
 \seealso{
-    \code{\linkS4class{SummarizedExperiment}},
-
-    \code{\link{getDataset}} to obtain an expression dataset from a loaded 
-    compendium.
+    \code{\linkS4class{SummarizedExperiment}}
 }
 \examples{
     # (1) Loading the GEO2KEGG microarray compendium
-    ma.ids <- loadEData("geo2kegg", nr.datasets=2)
+    geo2kegg <- loadEData("geo2kegg", nr.datasets=2)
 
     # (2) Loading the TCGA RNA-seq compendium
-    rseq.ids <- loadEData("tcga", nr.datasets=2)
+    tcga <- loadEData("tcga", nr.datasets=2)
 
     # (3) reading user-defined expression data from file
     data.dir <- system.file("extdata/myEData", package="GSEABenchmarkeR")
-    data.ids <- loadEData(data.dir)
+    edat <- loadEData(data.dir)
 }   
 

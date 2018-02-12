@@ -10,15 +10,13 @@
 #
 # iterate over expression datasets
 #
-.iter <- function(f, data.ids, parallel=NULL)
+.iter <- function(exp.list, f, parallel=NULL)
 {
     if(.Platform$OS.type == "windows") 
         parallel <- BiocParallel::SerialParam()
     if(!is.null(parallel)) BiocParallel::register(parallel)
     
-    .f <- function(id) f(getDataset(id))
-    res <- BiocParallel::bplapply(data.ids, .f)
-    names(res) <- data.ids
+    res <- BiocParallel::bplapply(exp.list, f)
     return(res)
 }
 

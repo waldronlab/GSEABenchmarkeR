@@ -10,17 +10,19 @@
     analysis to selected datasets of an expression data compendium.
 }
 \usage{
-    deApply( data.ids, 
+    deApply( exp.list, 
                 de.method=c("limma", "edgeR", "DESeq"), 
                 padj.method="flexible", parallel=NULL, ... )
     
-    plotDEDistribution( data.ids, alpha=0.05, beta=1 )
+    plotDEDistribution( exp.list, alpha=0.05, beta=1 )
     
-    writeDE( data.ids, out.dir=NULL )
+    writeDE( exp.list, out.dir=NULL )
 }
 \arguments{
-    \item{data.ids}{
-        A character vector of dataset IDs.
+    \item{exp.list}{
+        Experiment list.
+        A \code{list} of datasets, each being of class 
+        \code{\linkS4class{ExpressionSet}}.
     }
     \item{de.method}{
         Differential expression method.
@@ -112,20 +114,19 @@
 \examples{
     # reading user-defined expression data from file
     data.dir <- system.file("extdata/myEData", package="GSEABenchmarkeR")
-    data.ids <- loadEData(data.dir)
+    edat <- loadEData(data.dir)
 
     # differential expression analysis
-    deApply(data.ids)
-    se <- getDataset(data.ids[1])
+    edat <- deApply(edat)
 
     # visualization of per-dataset DE distribution
-    plotDEDistribution(data.ids)
+    plotDEDistribution(edat)
 
     # writing DE results to file
     out.dir <- tempdir()
     out.dir <- file.path(out.dir, "de")
     if(!file.exists(out.dir)) dir.create(out.dir)
  
-    writeDE(data.ids, out.dir)    
+    writeDE(edat, out.dir)    
 }   
 

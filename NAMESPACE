@@ -25,7 +25,6 @@ export(
     evalNrSets,
     evalNrSigSets,
     evalRanks,
-    getDataset,
     loadEData,
     maPreprocApply,
     plotDEDistribution,

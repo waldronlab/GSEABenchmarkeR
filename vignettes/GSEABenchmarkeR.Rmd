@@ -128,14 +128,14 @@ The `r Biocpkg("GSEABenchmarkeR")` package simplifies access to the compendium
 and allows to load it into the workspace via 
 
 ```{r maComp}
-ma.ids <- loadEData("geo2kegg")
-ma.ids
+geo2kegg <- loadEData("geo2kegg")
+names(geo2kegg)
 ```
 
 A specific dataset of the compendium can be obtained via
 
 ```{r getDatasetProbe}
-getDataset(ma.ids[1])
+geo2kegg[[1]]
 ```
 
 which returns, in this example, an `ExpressionSet` (documented in the 
@@ -149,12 +149,12 @@ to summarize expression levels for probes annotated to the same gene.
 Here, we apply the function to the first 5 datasets of the compendium. 
 
 ```{r maPreproc}
-maPreprocApply(ma.ids[1:5])
+geo2kegg <- maPreprocApply(geo2kegg[1:5])
 ```
 
 Now, 
 ```{r getDatasetGene}
-getDataset(ma.ids[1])
+geo2kegg[[1]]
 ```
 returns a `r Biocpkg("SummarizedExperiment")` that contains the summarized 
 expression values for 12,994 genes. Furthermore, sample groups 
@@ -162,7 +162,7 @@ expression values for 12,994 genes. Furthermore, sample groups
 9 controls (0).
 
 ```{r maGroups}
-se <- getDataset(ma.ids[1])
+se <- geo2kegg[[1]]
 table(se$GROUP)
 ```
 
@@ -192,15 +192,15 @@ gene set enrichment analysis.
 Here, we load the compendium into the workspace using only two of the datasets. 
 
 ```{r rseqComp}
-rseq.ids <- loadEData("tcga", nr.datasets=2)
-rseq.ids
+tcga <- loadEData("tcga", nr.datasets=2)
+names(tcga)
 ```
 
 For example, the breast cancer dataset contains RNA-seq read counts for roughly
 20,000 genes measured in 1,119 tumor (1) and 113 adjacent normal (0) samples. 
 
 ```{r brca}
-brca <- getDataset(rseq.ids[2])
+brca <- tcga[[2]]
 brca
 table(brca$GROUP)
 ``` 
@@ -221,9 +221,9 @@ files.
 ```{r userComp}
 data.dir <- system.file("extdata", package="GSEABenchmarkeR")
 edat.dir <- file.path(data.dir, "myEData")
-data.ids <- loadEData(edat.dir)
-data.ids
-getDataset(data.ids[1])
+edat <- loadEData(edat.dir)
+names(edat)
+edat[[1]]
 ```
 
 # Differential expression
@@ -238,8 +238,8 @@ the sample groups as defined in the **GROUP** variable.
 Here, we apply the function to 5 datasets of the GEO2KEGG compendium. 
 
 ```{r deAna}
-deApply(ma.ids[1:5], de.method="limma", padj.method="flexible")
-getDataset(ma.ids[1])
+geo2kegg <- deApply(geo2kegg, de.method="limma", padj.method="flexible")
+rowData(geo2kegg[[1]], use.names=TRUE)
 ```
 
 Note: DE studies typically report a gene as differentially expressed
@@ -300,8 +300,7 @@ assessment.
 
 Here, we carry out ORA on the first dataset of the GEO2KEGG compendium.
 ```{r runEA}
-se <- getDataset(ma.ids[1])
-kegg.ora.res <- runEA(se, method="ora", gs=kegg.gs)
+kegg.ora.res <- runEA(geo2kegg[[1]], method="ora", gs=kegg.gs)
 kegg.ora.res
 ```
 
@@ -314,7 +313,7 @@ directory.
 
 ```{r eaAll}
 res.dir <- tempdir()
-res <- eaApply(ma.ids[1:5], methods=c("ora", "camera"), 
+res <- eaApply(geo2kegg, methods=c("ora", "camera"), 
                 gs=kegg.gs, save2file=TRUE, out.dir=res.dir)
 res$ora[1:2]
 ```
@@ -357,7 +356,7 @@ GEO2KEGG compendium, we can use the `readRuntime` function as we have saved
 results to the indicated result directory in the above call of `eaApply`.
  
 ```{r readRT}
-ea.rtimes <- readRuntime(res.dir, ma.ids[1:5], methods=c("ora", "camera"))
+ea.rtimes <- readRuntime(res.dir, names(geo2kegg), methods=c("ora", "camera"))
 ea.rtimes
 ```
 
@@ -399,7 +398,7 @@ and CAMERA when applied to 5 datasets of the GEO2KEGG compendium (see above call
 of `eaApply`).
 
 ```{r readRankings}
-ea.ranks <- readRankings(res.dir, ma.ids[1:5], methods=c("ora", "camera"))
+ea.ranks <- readRankings(res.dir, names(geo2kegg), methods=c("ora", "camera"))
 lengths(ea.ranks)
 ea.ranks$ora[1:2]
 ```
@@ -565,7 +564,7 @@ We can visualize assessment results as before using `bpPlot`, which demonstrates
 here that ORA tends to recover more phenotype-relevant gene sets than CAMERA.  
 
 ```{r evalAll, fig.width=6, fig.height=6}
-all.kegg.res <- evalApply(ea.ranks, mala.kegg, d2d.map[ma.ids[1:5]])
+all.kegg.res <- evalApply(ea.ranks, mala.kegg, d2d.map[names(geo2kegg)])
 bpPlot(all.kegg.res, what="rel.sets")
 ```
 
@@ -584,8 +583,8 @@ Inspecting
 ```{r bpRegister}
 BiocParallel::registered()
 ```
-shows that the execution uses a `MulticoreParam` per default, where the 
-`bpnworkers` attribute indicates the number of cores involved in the computation.
+shows that the execution uses a `MulticoreParam` per default (on Windows: a `SnowParam`), 
+where the `bpnworkers` attribute indicates the number of cores involved in the computation.
 
 To change the execution mode of functions provided in the
 `r Biocpkg("GSEABenchmarkeR")` package, accordingly configured computation 
@@ -603,7 +602,7 @@ BiocParallel::bpprogressbar(bp.par) <- TRUE
 and supply `deApply` with the updated computation parameter.
 
 ```{r deApplyBP}
-deApply(ma.ids[1:4], parallel=bp.par)
+geo2kegg <- deApply(geo2kegg, parallel=bp.par)
 ```
 
 Users that would like to use distributed computation, on e.g. an institutional 
