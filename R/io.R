@@ -52,7 +52,8 @@ writeDE <- function(exp.list, out.dir=NULL)
         gt <- EnrichmentBrowser:::.getGeneAnno(names(xx), "hsa")
         gt <- cbind(gt, rowData(xx, use.names=TRUE))
         gt <- EnrichmentBrowser:::.sortGeneTable(gt)  
-        ind <- gt[,config.ebrowser("EZ.COL")]      
+        EZ.COL <- EnrichmentBrowser::config.ebrowser("EZ.COL")
+        ind <- gt[,EZ.COL]      
         write.table(gt, file=gt.file, row.names=FALSE, quote=FALSE, sep="\t")
     }
     invisible(lapply(exp.list, .f))

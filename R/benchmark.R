@@ -12,17 +12,66 @@
 #
 .iter <- function(exp.list, f, parallel=NULL)
 {
-    if(.Platform$OS.type == "windows") 
-        parallel <- BiocParallel::SerialParam()
+    is.windows <- is.null(parallel) && .Platform$OS.type == "windows"
+    if(is.windows) parallel <- BiocParallel::SerialParam()
     if(!is.null(parallel)) BiocParallel::register(parallel)
     
     res <- BiocParallel::bplapply(exp.list, f)
     return(res)
 }
 
+
 #
 # SIGNIFICANT SETS   
 #
+
+evalFDR <- function(se, method, gs, alpha=0.05, nperm=1000, ...)
+{
+    GRP.COL <- EnrichmentBrowser::config.ebrowser("GRP.COL")
+    GSP.COL <- EnrichmentBrowser::config.ebrowser("GSP.COL")
+
+    if(!is.matrix(nperm)) perm.mat <- .getPermMat(se[[GRP.COL]], nperm)
+    else
+    {
+        perm.mat <- nperm
+        nperm <- ncol(perm.mat)
+    }
+
+    perm <- ifelse(method=="ora", 0, 1000)
+    grid <- seq_len(ncol(perm.mat))
+
+    .calcFDR <- function(i)
+    {
+        se[[GRP.COL]] <- perm.mat[,i]    
+        if(method=="ora") se <- EnrichmentBrowser::de.ana(se)  
+        res <- EnrichmentBrowser::sbea(method, se, gs, perm=perm, ...) 
+        res <- EnrichmentBrowser::gs.ranking(res, signif.only=FALSE)
+        res <- mean(res[[GSP.COL]] < alpha)
+        return(res)
+    }
+
+    fract <- vapply(grid, .calcFDR, numeric(1))
+    return(fract)
+}
+
+.getPermMat <- function(grp, nperm=1000)
+{
+    perm.mat <- replicate(nperm, sample(grp))
+
+    # any permutation identical to observed setup?
+    ind.id <- apply(perm.mat, 2, function(x) identical(grp, x))
+    if(any(ind.id)) perm.mat <- perm.mat[,!ind.id]
+
+    # any duplicated permutations?
+    ind.dup <- duplicated(data.frame(t(perm.mat)))
+    if(any(ind.dup)) perm.mat <- perm.mat[,!ind.dup]
+
+    d <- nperm - ncol(perm.mat) 
+    if(d) message(paste("Removed", d, "identical / duplicated permutations"))
+    
+    return(perm.mat)
+}
+
 
 # total number of gene sets evaluated by enrichment methods across datasets  
 evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)

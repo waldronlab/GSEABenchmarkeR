@@ -99,10 +99,7 @@ maPreprocApply <- function(exp.list, parallel=NULL)
         return(eset) 
     }
 
-    # parallel execution
-    if(!is.null(parallel)) BiocParallel::register(parallel)
-    exp.list <- BiocParallel::bplapply(exp.list, .pre)
-    
+    exp.list <- .iter(exp.list, .pre, parallel=parallel)
     return(exp.list)
 }
 

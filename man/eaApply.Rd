@@ -15,7 +15,7 @@
     \item{exp.list}{
         Experiment list.
         A \code{list} of datasets, each being of class 
-        \code{\linkS4class{ExpressionSet}}.
+        \code{\linkS4class{SummarizedExperiment}}.
     }
     \item{methods}{
         Methods for enrichment analysis.

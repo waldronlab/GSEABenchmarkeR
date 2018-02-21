@@ -9,7 +9,7 @@ deApply <- function(exp.list,
     if(flex) padj.method <- "none"
     
     ADJP.COL <- EnrichmentBrowser::config.ebrowser("ADJP.COL")
-    .f <- function(i)
+    .de <- function(i)
     { 
         se <- EnrichmentBrowser::de.ana(i, de.method=de.method, 
                                             padj.method=padj.method, ...)
@@ -25,10 +25,7 @@ deApply <- function(exp.list,
         return(se)
     }
    
-    # parallel execution
-    if(!is.null(parallel)) BiocParallel::register(parallel)
-    exp.list <- BiocParallel::bplapply(exp.list, .f)
-    
+    exp.list <- .iter(exp.list, .de, parallel=parallel)
     return(exp.list)
 }
 
@@ -58,14 +55,13 @@ deApply <- function(exp.list,
 eaApply <- function(exp.list, methods, gs, 
     parallel=NULL, save2file=FALSE, out.dir=NULL, ...)
 { 
-    if(!is.null(parallel)) BiocParallel::register(parallel)
     res <- lapply(methods, 
         function(m)
         {
             message(m)
-            .f <- function(i) runEA(i, 
+            .ea <- function(i) runEA(i, 
                 method=m, gs=gs, save2file=save2file, out.dir=out.dir, ...)
-            r <- BiocParallel::bplapply(exp.list, .f)
+            r <- .iter(exp.list, .ea, parallel=NULL)
             return(r)
         }
     )    
