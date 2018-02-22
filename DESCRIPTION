@@ -1,7 +1,7 @@
 Package: GSEABenchmarkeR
 Type: Package
 Title: Reproducible GSEA Benchmarking
-Version: 0.99.6
+Version: 0.99.7
 Author:
     Ludwig Geistlinger [aut, cre],
     Gergely Csaba [aut],
@@ -48,10 +48,8 @@ Imports:
     utils
 Suggests:
     BiocStyle,
-    BiocCheck,
     knitr,
-    rmarkdown,
-    testthat
+    rmarkdown
 biocViews:
     Microarray,
     RNASeq,

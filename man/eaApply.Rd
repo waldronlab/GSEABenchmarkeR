@@ -70,11 +70,11 @@
     for configuration of parallel computation.
 }
 \examples{
-    # loading two datasets from the GEO2KEGG compendium
-    geo2kegg <- loadEData("geo2kegg", nr.datasets=2)
+    # loading three datasets from the GEO2KEGG compendium
+    geo2kegg <- loadEData("geo2kegg", nr.datasets=3)
 
-    # preprocessing and DE analysis
-    geo2kegg <- maPreprocApply(geo2kegg)
+    # preprocessing and DE analysis for two of the datasets
+    geo2kegg <- maPreprocApply(geo2kegg[2:3])
     geo2kegg <- deApply(geo2kegg)
 
     # getting a subset of human KEGG gene sets

@@ -64,9 +64,9 @@
 }
 \examples{
     # simulated setup:
-    # 3 methods & 5 datasets
-    methods <- paste0("m", 1:3)
-    data.ids <- paste0("d", 1:5)
+    # 2 methods & 2 datasets
+    methods <- paste0("m", 1:2)
+    data.ids <- paste0("d", 1:2)
 
     # simulate gene set rankings
     ea.ranks <- sapply(methods, function(m) 

@@ -44,9 +44,9 @@
 }
 \examples{
     # simulated setup: 
-    # 3 methods & 5 datasets
-    methods <- paste0("m", 1:3)
-    data.ids <- paste0("d", 1:5)
+    # 1 methods & 1 datasets
+    methods <- paste0("m", 1:2)
+    data.ids <- paste0("d", 1:2)
 
     # result directory
     res.dir <- tempdir()
@@ -54,10 +54,10 @@
     for(d in sdirs) dir.create(d)
     
     # store runtime & rankings 
-    for(m in 1:3)
+    for(m in 1:2)
     {
         rt <- runif(5, min=m, max=m+1)
-        for(d in 1:5)
+        for(d in 1:2)
         {
             # runtime
             out.file <- paste(data.ids[d], "txt", sep=".")
