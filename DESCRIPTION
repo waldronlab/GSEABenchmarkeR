@@ -1,7 +1,7 @@
 Package: GSEABenchmarkeR
 Type: Package
 Title: Reproducible GSEA Benchmarking
-Version: 0.99.8
+Version: 0.99.9
 Author:
     Ludwig Geistlinger [aut, cre],
     Gergely Csaba [aut],
@@ -32,6 +32,7 @@ Depends:
 Imports:
     AnnotationDbi, 
     AnnotationHub,
+    BiocFileCache,
     BiocParallel,
     edgeR,
     EnrichmentBrowser,

@@ -23,7 +23,7 @@ vignette: >
   % \VignetteEngine{knitr::rmarkdown}
 ---
 
-```{r style, echo=FALSE}
+```{r setup, echo=FALSE}
 suppressPackageStartupMessages({ 
     library(GSEABenchmarkeR)
     library(EnrichmentBrowser)
@@ -72,7 +72,7 @@ In the following, we demonstrate how the package can be used to
 
 We start by loading the package.
 
-```{r setup}
+```{r lib}
 library(GSEABenchmarkeR)
 ```
 
@@ -143,13 +143,13 @@ which returns, in this example, an `ExpressionSet` (documented in the
 22,283 probe sets measured for 16 patients. 
 
 To prepare the datasets for subsequent analysis, the `r Biocpkg("GSEABenchmarkeR")`
-package provides the function `maPreprocApply`.
-The function invokes `EnrichmentBrowser::probe.2.gene.eset` on each dataset 
+package provides the function `maPreproc`.
+The function invokes `EnrichmentBrowser::probe2gene` on each dataset 
 to summarize expression levels for probes annotated to the same gene. 
 Here, we apply the function to the first 5 datasets of the compendium. 
 
 ```{r maPreproc}
-geo2kegg <- maPreprocApply(geo2kegg[1:5])
+geo2kegg <- maPreproc(geo2kegg[1:5])
 ```
 
 Now, 
@@ -166,7 +166,7 @@ se <- geo2kegg[[1]]
 table(se$GROUP)
 ```
 
-Note: The `maPreprocApply` returns datasets consistently mapped to NCBI Entrez
+Note: The `maPreproc` returns datasets consistently mapped to NCBI Entrez
 Gene IDs, which is compatible with most downstream applications. However, 
 mapping to a different ID type such as ENSEMBL IDs or HGNC symbols can also be 
 done using the function `EnrichmentBrowser::map.ids`.  
@@ -230,15 +230,15 @@ edat[[1]]
 
 To perform differential expression (DE) analysis between sample groups for 
 selected datasets of a compendium, the `r Biocpkg("GSEABenchmarkeR")` package 
-provides the function `deApply`.
+provides the function `runDE`.
 
-The function invokes `EnrichmentBrowser::de.ana` on each dataset, which contrasts
+The function invokes `EnrichmentBrowser::deAna` on each dataset, which contrasts
 the sample groups as defined in the **GROUP** variable.
 
 Here, we apply the function to 5 datasets of the GEO2KEGG compendium. 
 
 ```{r deAna}
-geo2kegg <- deApply(geo2kegg, de.method="limma", padj.method="flexible")
+geo2kegg <- runDE(geo2kegg, de.method="limma", padj.method="flexible")
 rowData(geo2kegg[[1]], use.names=TRUE)
 ```
 
@@ -300,12 +300,12 @@ assessment.
 
 Here, we carry out ORA on the first dataset of the GEO2KEGG compendium.
 ```{r runEA}
-kegg.ora.res <- runEA(geo2kegg[[1]], method="ora", gs=kegg.gs)
+kegg.ora.res <- runEA(geo2kegg[[1]], method="ora", gs=kegg.gs, perm=0)
 kegg.ora.res
 ```
 
-Applying `runEA` for several methods on multiple datasets can be done using the
-function `eaApply`.
+The function `runEA` can also be used to carry out several methods on multiple 
+datasets.
 As an example, we carry out ORA and
 [CAMERA](https://doi.org/10.1093/nar/gks461)
 on 5 datasets of the GEO2KEGG compendium saving the results in a temporary 
@@ -313,8 +313,8 @@ directory.
 
 ```{r eaAll}
 res.dir <- tempdir()
-res <- eaApply(geo2kegg, methods=c("ora", "camera"), 
-                gs=kegg.gs, save2file=TRUE, out.dir=res.dir)
+res <- runEA(geo2kegg, methods=c("ora", "camera"), 
+                gs=kegg.gs, perm=0, save2file=TRUE, out.dir=res.dir)
 res$ora[1:2]
 ```
 
@@ -352,11 +352,12 @@ in
 [Geistlinger et al., 2016](https://doi.org/10.1186/s12859-016-0884-1)).
   
 To obtain the runtime from the application of ORA and CAMERA to 5 datasets of the
-GEO2KEGG compendium, we can use the `readRuntime` function as we have saved 
-results to the indicated result directory in the above call of `eaApply`.
+GEO2KEGG compendium, we can use the `readResults` function as we have saved 
+results to the indicated result directory in the above call of `runEA`.
  
 ```{r readRT}
-ea.rtimes <- readRuntime(res.dir, names(geo2kegg), methods=c("ora", "camera"))
+ea.rtimes <- readResults(res.dir, names(geo2kegg), 
+                            methods=c("ora", "camera"), type="runtime")
 ea.rtimes
 ```
 
@@ -393,12 +394,13 @@ It is therefore important to evaluate resulting fractions of significant gene
 sets in comparison to other methods and with respect to the fraction of 
 differentially expressed genes as a baseline.
 
-We use the `readRankings` function to obtain the saved gene set rankings of ORA
+We use the `readResults` function to obtain the saved gene set rankings of ORA
 and CAMERA when applied to 5 datasets of the GEO2KEGG compendium (see above call
-of `eaApply`).
+of `runEA`).
 
 ```{r readRankings}
-ea.ranks <- readRankings(res.dir, names(geo2kegg), methods=c("ora", "camera"))
+ea.ranks <- readResults(res.dir, names(geo2kegg), 
+                            methods=c("ora", "camera"), type="ranking")
 lengths(ea.ranks)
 ea.ranks$ora[1:2]
 ```
@@ -486,7 +488,7 @@ head(d2d.map)
 
 To evaluate the phenotype relevance of a gene set ranking obtained from the 
 application of an enrichment method to an expression dataset, the function
-`evalRanks` assesses whether the ranking accumulates phenotype-relevant gene 
+`evalRelevance` assesses whether the ranking accumulates phenotype-relevant gene 
 sets (i.e. gene sets with high relevance scores) at the top.
 Therefore, the function first transforms the ranks from the enrichment analysis
 to weights - where the greater the weight of a gene set, the more it is ranked 
@@ -494,12 +496,12 @@ towards the top of the GSEA ranking.
 These weights are then multiplied by the corresponding relevance scores and 
 summed.
  
-Here, we use `evalRanks` to assess whether ORA, when applied to the GSE1297 
+Here, we use `evalRelevance` to assess whether ORA, when applied to the GSE1297 
 dataset, recovers Alzheimer-relevant KEGG pathways.  
 
-```{r evalRanks}
+```{r evalRelevance}
 ea.ranks$ora$GSE1297
-obs.score <- evalRanks(ea.ranks$ora$GSE1297, mala.kegg$ALZ)
+obs.score <- evalRelevance(ea.ranks$ora$GSE1297, mala.kegg$ALZ)
 obs.score
 ```
 
@@ -508,9 +510,9 @@ obs.score
 To assess the significance of the observed relevance score of an enrichment
 method applied to a specific dataset, i.e. to assess how likely it is to 
 observe a relevance score equal or greater than the one obtained, the function
-`compRand` repeatedly applies `evalRanks` to randomly drawn gene set rankings. 
+`compRand` repeatedly applies `evalRelevance` to randomly drawn gene set rankings. 
 
-For demonstration, we compute relevance scores for 100 random gene set rankings
+For demonstration, we compute relevance scores for 50 random gene set rankings
 and calculate the *p*-value as for a permutation test. 
 This demonstrates that the relevance score obtained from applying ORA to GSE1297
 significantly exceeds random scores.
@@ -518,9 +520,9 @@ significantly exceeds random scores.
 ```{r compRand}
 gs.names <- ea.ranks$ora$GSE1297$GENE.SET
 gs.ids <- substring(gs.names, 1, 8)
-rand.scores <- compRand(mala.kegg$ALZ, gs.ids, n=100)
+rand.scores <- compRand(mala.kegg$ALZ, gs.ids, perm=50)
 summary(rand.scores)
-(sum(rand.scores >= obs.score) + 1) / 101
+(sum(rand.scores >= obs.score) + 1) / 51
 ```
 
 ### Theoretical optimum
@@ -532,7 +534,7 @@ phenotypes (see above Section *5.3.1 MalaCards disease relevance rankings*),
 comparison between datasets is not straightforward as resulting relevance scores
 scale differently. 
 
-Therefore, the function `compOpt` applies `evalRanks` to the theoretically
+Therefore, the function `compOpt` applies `evalRelevance` to the theoretically
 optimal case in which the enrichment analysis ranking is identical to the 
 relevance score ranking. The ratio between observed and optimal score can then
 be used to compare observed scores between datasets.
@@ -549,30 +551,68 @@ round(obs.score / opt.score * 100, digits=2)
 
 ### Cross-dataset relevance score distribution
 
-Evaluation of phenotype relevance with `evalRanks` for several methods 
-applied across multiple datasets can be done using the function `evalApply`.
+Evaluation of phenotype relevance with `evalRelevance` can also be done for 
+several methods applied across multiple datasets.
 This allows to assess whether certain enrichment methods tend to produce 
 rankings of higher phenotype relevance than other methods when applied to a
 compendium of datasets.
 As explained in the previous section, observed relevance scores are always 
 expressed in relation to the respective optimal score.
 
-For demonstration, we use `evalApply` to evaluate phenotype relevance of the 
+For demonstration, we use `evalRelevance` to evaluate phenotype relevance of the
 gene set rankings produced by ORA and CAMERA when applied to 5 datasets of the
 GEO2KEGG compendium.
 We can visualize assessment results as before using `bpPlot`, which demonstrates
 here that ORA tends to recover more phenotype-relevant gene sets than CAMERA.  
 
 ```{r evalAll, fig.width=6, fig.height=6}
-all.kegg.res <- evalApply(ea.ranks, mala.kegg, d2d.map[names(geo2kegg)])
+all.kegg.res <- evalRelevance(ea.ranks, mala.kegg, d2d.map[names(geo2kegg)])
 bpPlot(all.kegg.res, what="rel.sets")
 ```
 
-# Parallel computation
+# Advanced 
+
+## Caching
+
+Preparing an expression data compendium for benchmarking of enrichment methods
+can be time-consuming.
+In case of the GEO2KEGG compendium, it requires to summarize probe level 
+expression on gene level and to subsequently carry out differential expression 
+analysis for each dataset.
+
+To flexibly save and restore an already processed expression data compendium, 
+we can use the `cacheResource` function which builds on functionality of the
+`r Biocpkg("BiocFileCache")` package.
+
+```{r cacheRes}
+cacheResource(geo2kegg, rname="geo2kegg")
+```
+
+This adds the selected 5 datasets of the GEO2KEGG compendium (as processed 
+throughout this vignette) to the cache, and allows to restore it at a later time
+via
+
+```{r getRes}
+geo2kegg <- loadEData("geo2kegg", cache=TRUE)
+names(geo2kegg)
+```
+
+Note: to obtain the original unprocessed version of the compendium, set the 
+`cache` argument of the `loadEData` function to `FALSE`.
+
+To clear the cache (use with care):
+
+```{r clearCache, eval=FALSE}
+cache.dir <- rappdirs::user_cache_dir("GSEABenchmarkeR")
+bfc <- BiocFileCache::BiocFileCache(cache.dir)
+BiocFileCache::removebfc(bfc)
+```
+
+## Parallel computation
 
 Leveraging functionality from `r Biocpkg("BiocParallel")`, parallel computation
-of GSEABenchmarkeR's *Apply*-functions, i.e. `maPreprocApply`, `deApply`, and
-especially `eaApply`, is straightforward.
+of the functions `maPreproc`, `runDE`, and
+especially `runEA`, when applied to multiple datasets is straightforward.
 Internally, these functions call `BiocParallel::bplapply`, which triggers parallel
 computation as configured in the first element of `BiocParallel::registered()`.
 As a result, parallel computation is implicitly incorporated in the above calls
@@ -583,28 +623,30 @@ Inspecting
 ```{r bpRegister}
 BiocParallel::registered()
 ```
-shows that the execution uses a `MulticoreParam` per default (on Windows: a `SnowParam`), 
-where the `bpnworkers` attribute indicates the number of cores involved in the computation.
+shows that the execution uses a `MulticoreParam` per default (on Windows:
+a `SnowParam`), where the `bpnworkers` attribute indicates the number of cores 
+involved in the computation.
 
 To change the execution mode of functions provided in the
 `r Biocpkg("GSEABenchmarkeR")` package, accordingly configured computation 
 parameters of class `BiocParallelParam` can either directly be registered via
 `BiocParallel::register`, or supplied with the `parallel` argument of the
-*Apply*-functions.
+respective function.
 
-For demonstration, we configure here a `BiocParallelParam` to display a progress bar
+For demonstration, we configure here a `BiocParallelParam` to display a progress
+bar
 
 ```{r bpParam}
 bp.par <- BiocParallel::registered()[[1]]
 BiocParallel::bpprogressbar(bp.par) <- TRUE
 ```
 
-and supply `deApply` with the updated computation parameter.
+and supply `runDE` with the updated computation parameter.
 
-```{r deApplyBP}
-geo2kegg <- deApply(geo2kegg, parallel=bp.par)
+```{r runDEBP}
+geo2kegg <- runDE(geo2kegg, parallel=bp.par)
 ```
 
 Users that would like to use distributed computation, on e.g. an institutional 
-computer cluster, should consult the vignette of the `r Biocpkg("BiocParallel")` 
+computer cluster, should consult the vignette of the `r Biocpkg("BiocParallel")`
 package to similarly configure a `BiocParallelParam` for that purpose.

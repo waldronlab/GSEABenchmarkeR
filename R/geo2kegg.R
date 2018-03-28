@@ -13,28 +13,29 @@
 # loading geo2kegg benchmark compendium
 #
 .loadGEO2KEGG <- function(nr.datasets=NULL, 
-                            preproc=FALSE, 
-                            de.only=FALSE, 
-                            excl.metac=FALSE)
+    cache=TRUE, preproc=FALSE, de.only=FALSE, excl.metac=FALSE)
 {
     data.ids <- .getGeo2KeggIds(de.only, excl.metac)
-    if(!is.null(nr.datasets)) data.ids <- data.ids[seq_len(nr.datasets)]
+    if(!is.null(nr.datasets)) 
+    {
+        nr.datasets <- min(nr.datasets, length(data.ids))  
+        data.ids <- data.ids[seq_len(nr.datasets)]
+    }
     message("Loading GEO2KEGG data compendium ...")
     
-    # already on disk?
-    data.dir <- rappdirs::user_data_dir("GSEABenchmarkeR")
-    gse.dir <- file.path(data.dir, "GEO2KEGG")
-    if(file.exists(gse.dir))
-    {        
-        message("Found GEO2KEGG compendium on disk. Loading from file ...")
-        eids <- .loadEDataFromFile(gse.dir, nr.datasets=nr.datasets)
-        if(all(data.ids %in% eids)) return(data.ids)
-    }
-    
+    # should a cached version be used?
+    if(cache)
+    {   
+        # using a cached version ignores all other arguments
+        # such as nr.datasets, de.only, ... 
+        el <- .getResourceFromCache(rname="geo2kegg", update.value=NA)
+        if(!is.null(el)) return(el)
+    }       
+
     # if not, create from package
     geoIds1 <- data(package="KEGGdzPathwaysGEO")$results[,"Item"]
     if(interactive()) 
-        pb <- txtProgressBar(1, length(data.ids), style=3, width=length(data.ids))
+        pb <- txtProgressBar(0, length(data.ids), style=3)
 
     .EDATA <- environment()
     el <- lapply(data.ids, 
@@ -50,11 +51,50 @@
     if(interactive()) close(pb)
     names(el) <- data.ids
 
-    if(preproc) el <- maPreprocApply(data.ids)
+    if(preproc)
+    {
+        el <- maPreproc(el)
+        cacheResource(el, "geo2kegg")
+    }
     return(el)
 }
 
-maPreprocApply <- function(exp.list, parallel=NULL)
+
+
+#' Preprocessing of microarray expression data
+#' 
+#' This function prepares datasets of the GEO2KEGG microarray compendium for
+#' further analysis. This includes summarization of probe level expression to
+#' gene level expression as well as annotation of required colData slots for
+#' sample grouping.
+#' 
+#' 
+#' @param exp.list Experiment list.  A \code{list} of datasets, each being of
+#' class \code{\linkS4class{ExpressionSet}}.
+#' @param parallel Parallel computation mode.  An instance of class
+#' \code{\linkS4class{BiocParallelParam}}.  See the vignette of the
+#' \code{BiocParallel} package for switching between serial, multi-core, and
+#' grid execution.  Defaults to \code{NULL}, which then uses the first element
+#' of \code{BiocParallel::registered()} for execution.  If not changed by the
+#' user, this accordingly defaults to multi-core execution on the local host.
+#' @return A \code{list} of datasets, each being of class
+#' \code{\linkS4class{SummarizedExperiment}}.
+#' @author Ludwig Geistlinger <Ludwig.Geistlinger@@sph.cuny.edu>
+#' @seealso \code{\link{loadEData}} to load a specified expression data 
+#' compendium.
+#' @examples
+#' 
+#'     # reading user-defined expression data from file
+#'     geo2kegg <- loadEData("geo2kegg", nr.datasets=3)
+#' 
+#'     # only considering the first 100 probes for demonstration
+#'     geo2kegg <- lapply(geo2kegg, function(d) d[1:100,])   
+#'
+#'     # preprocessing two datasets
+#'     geo2kegg <- maPreproc(geo2kegg[2:3])
+#' 
+#' @export maPreproc
+maPreproc <- function(exp.list, parallel=NULL)
 {
     message("Summarizing probe level expression ...")
     anno.pkgs <- vapply(exp.list, annotation, character(1))
@@ -89,14 +129,14 @@ maPreprocApply <- function(exp.list, parallel=NULL)
         id <- experimentData(eset)@name
         anno <- paste0(annotation(eset), ".db")
         fData(eset)$ENTREZID <- p2g.maps[[anno]][rownames(eset)] 
-        eset <- EnrichmentBrowser::probe.2.gene.eset(eset)
-        colnames(colData(eset))[2] <- GRPCOL 
-        if(ncol(colData(eset)) > 2) colnames(colData(eset))[3] <- BLKCOL 
-        eset[[GRPCOL]] <- ifelse(eset[[GRPCOL]] == "d", 1, 0)
-        metadata(eset)$dataId <- id 
-        metadata(eset)$dataType <- "ma"
-        metadata(eset)$annotation <- "hsa"
-        return(eset) 
+        se <- EnrichmentBrowser::probe2gene(eset)
+        colnames(colData(se))[2] <- GRPCOL 
+        if(ncol(colData(se)) > 2) colnames(colData(se))[3] <- BLKCOL 
+        se[[GRPCOL]] <- ifelse(se[[GRPCOL]] == "d", 1, 0)
+        metadata(se)$dataId <- id 
+        metadata(se)$dataType <- "ma"
+        metadata(se)$annotation <- "hsa"
+        return(se) 
     }
 
     exp.list <- .iter(exp.list, .pre, parallel=parallel)

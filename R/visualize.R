@@ -8,7 +8,46 @@
 ############################################################
 
 # general boxplot functionality for enrichment method data
-bpPlot <- function(data, what=c("runtime", "sig.sets", "rel.sets")) 
+
+
+#' Customized boxplot visualization of benchmark results
+#' 
+#' This is a convenience function to create customized boxplots for specific
+#' benchmark criteria such as runtime, statistical significance and phenotype
+#' relevance.
+#' 
+#' 
+#' @param data Numeric matrix or list of numeric vectors.  In case of a matrix,
+#' column names are assumed to be method names and rownames are assumed to be
+#' dataset IDs.  In case of a list, names are assumed to be methods names and
+#' each element corresponds to a numeric vector with names assumed to be
+#' dataset IDs.
+#' @param what Character.  Determines how the plot is customized.  One of
+#' \itemize{ \item runtime: displays runtime of methods across datasets, \item
+#' sig.sets: displays percentage of significant gene sets, \item rel.sets:
+#' displays phenotype relevance scores.  }
+#' @return None. Plots to a graphics device.
+#' @author Ludwig Geistlinger <Ludwig.Geistlinger@@sph.cuny.edu>
+#' @seealso \code{\link{evalNrSigSets}} to evaluate fractions of significant 
+#' gene sets; \code{\link{evalRelevance}} to evaluate phenotype relevance of
+#' gene set rankings.
+#' @examples
+#' 
+#'     # simulated setup:
+#'     # 3 methods & 5 datasets
+#'     methods <- paste0("m", 1:3)
+#'     data.ids <- paste0("d", 1:5)
+#' 
+#'     # runtime data
+#'     rt <- vapply(1:3, function(m) runif(5, min=m, max=m+1), numeric(5))
+#'     rownames(rt) <- data.ids 
+#'     colnames(rt) <- methods
+#' 
+#'     # plot
+#'     bpPlot(rt, what="runtime")
+#' 
+#' @export bpPlot
+bpPlot <- function(data, what=c("runtime", "sig.sets", "rel.sets", "typeI")) 
 {
     if(is.matrix(data)) 
         data <- sapply(colnames(data), function(i) data[,i], simplify=FALSE) 
@@ -22,12 +61,50 @@ bpPlot <- function(data, what=c("runtime", "sig.sets", "rel.sets"))
                     runtime = "log10 runtime [sec]",
                     sig.sets = "% significant sets",
                     rel.sets = "%opt",
+                    typeI = "type I error rate",
                     what)
 
     par(las=2)
     boxplot(data, col=rainbow(length(data)), ylab=ylab)
+    if(what == "typeI") abline(h=0.05, col="red", lty=2)
 }
 
+plotTypeIError <- function(data)
+{
+    names(data) <- substring(names(data), 1, 7)
+    data <- data[,order(data["Max.",] - data["Mean",])]
+    par(las=2)
+    par(pch=20)
+    boxplot(data, ylab="type I error rate")
+    points(x=seq_len(ncol(data)), y=data["Mean",], col="darkviolet")
+    abline(h=0.05, col="red", lty=2)
+}
+
+plotGSSizeRobustness <- function(mat, what=c("sig.sets", "typeI"))
+{
+    what <- what[1]
+    ylab <- switch(what,
+                    sig.sets = "% significant sets",
+                    typeI = "type I error rate",
+                    what)
+
+
+    xmax <- nrow(mat)
+    ymax <- max(mat, na.rm=TRUE)
+    plot(NA, axes=FALSE, 
+            xlim=c(1, xmax), ylim=c(0, ymax),
+            xlab="GS size", ylab=ylab)
+
+    grid <- sub("gs", "", rownames(mat))
+    axis(1, at=seq_len(xmax), labels=grid)
+    axis(2)
+    box()
+    matlines(mat)
+}   
+
+
+#' @rdname runDE
+#' @export
 plotDEDistribution <- function(exp.list, alpha=0.05, beta=1)
 {
     x <- lapply(exp.list, function(i) .fractDE(i, alpha=alpha, beta=beta))
