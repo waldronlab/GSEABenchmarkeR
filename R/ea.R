@@ -103,7 +103,7 @@ runDE <- function(exp.list,
         if(flex)
         {
             padj <- p.adjust(rowData(se)[,ADJP.COL], method="BH")
-            fracSigP <- mean(padj < 0.05)
+            fracSigP <- mean(padj < 0.05, na.rm=TRUE)
             if(fracSigP > 0.25) 
             padj <- p.adjust(rowData(se)[,ADJP.COL], method="bonf") 
             if(fracSigP > 0.01) rowData(se)[,ADJP.COL] <- padj
@@ -150,8 +150,8 @@ runDE <- function(exp.list,
 #' a single \code{\linkS4class{SummarizedExperiment}} is also allowed. 
 #' See the documentation of \code{\link{sbea}} for required minimal annotations.
 #' @param methods Methods for enrichment analysis.  A character vector with
-#' method names chosen from \code{EnrichmentBrowser::sbea.methods} and
-#' \code{EnrichmentBrowser::nbea.methods}, or user-defined functions
+#' method names chosen from \code{\link{sbea.methods}} and
+#' \code{\link{nbea.methods}}, or user-defined functions
 #' implementing methods for enrichment analysis.
 #' @param gs Gene sets, i.e. a list of character vectors of gene IDs.
 #' @param perm Number of permutations of the sample group assignments. 

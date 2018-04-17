@@ -39,8 +39,8 @@
 #' @param exp.list Experiment list.  A \code{list} of datasets, each being of
 #' class \code{\linkS4class{SummarizedExperiment}}.
 #' @param methods Methods for enrichment analysis.  A character vector with
-#' method names chosen from \code{EnrichmentBrowser::sbea.methods} and
-#' \code{EnrichmentBrowser::nbea.methods}, or user-defined functions
+#' method names chosen from \code{\link{sbea.methods}} and
+#' \code{\link{nbea.methods}}, or user-defined functions
 #' implementing methods for enrichment analysis.
 #' @param gs Gene sets, i.e. a list of character vectors of gene IDs.
 #' @param alpha Numeric. Statistical significance level. Defaults to 0.05.

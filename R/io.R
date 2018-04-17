@@ -281,15 +281,15 @@ readDataId2diseaseCodeMap <- function(map.file)
 #' to.
 #' @param data.ids A character vector of dataset IDs.
 #' @param methods Methods for enrichment analysis.  A character vector with
-#' method names typically chosen from \code{EnrichmentBrowser::sbea.methods}
-#' and \code{EnrichmentBrowser::nbea.methods}, or user-defined functions
+#' method names typically chosen from \code{\link{sbea.methods}}
+#' and \code{\link{nbea.methods}}, or user-defined functions
 #' implementing methods for enrichment analysis.
 #' @param type Character. Type of the result. Should be one out of 'runtime',
 #' 'ranking', or 'typeI'. 
 #' @return A result list with an entry for each method applied.  Each entry
-#' stores corresponding runtimes (for \code{readRuntimes}) and gene set
-#' rankings (for \code{readRankings}) as obtained from applying the respective
-#' method to the given datasets.
+#' stores corresponding runtimes (\code{type="runtime"} ), gene set
+#' rankings (\code{type="ranking"}), or type I error rates (\code{type="typeI"})
+#' as obtained from applying the respective method to the given datasets.
 #' @author Ludwig Geistlinger <Ludwig.Geistlinger@@sph.cuny.edu>
 #' @seealso \code{runEA} to apply enrichment methods to multiple datasets.
 #' @examples
