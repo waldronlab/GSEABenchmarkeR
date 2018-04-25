@@ -14,8 +14,8 @@ to.}
 \item{data.ids}{A character vector of dataset IDs.}
 
 \item{methods}{Methods for enrichment analysis.  A character vector with
-method names typically chosen from \code{EnrichmentBrowser::sbea.methods}
-and \code{EnrichmentBrowser::nbea.methods}, or user-defined functions
+method names typically chosen from \code{\link{sbeaMethods}}
+and \code{\link{nbeaMethods}}, or user-defined functions
 implementing methods for enrichment analysis.}
 
 \item{type}{Character. Type of the result. Should be one out of 'runtime',
@@ -23,9 +23,9 @@ implementing methods for enrichment analysis.}
 }
 \value{
 A result list with an entry for each method applied.  Each entry
-stores corresponding runtimes (for \code{readRuntimes}) and gene set
-rankings (for \code{readRankings}) as obtained from applying the respective
-method to the given datasets.
+stores corresponding runtimes (\code{type="runtime"} ), gene set
+rankings (\code{type="ranking"}), or type I error rates (\code{type="typeI"})
+as obtained from applying the respective method to the given datasets.
 }
 \description{
 These functions read results obtained from the application of
@@ -57,7 +57,7 @@ enrichment methods to multiple datasets for subsequent assessment.
             # ranking
             out.file <- sub("txt$", "rds", out.file)
             r <- EnrichmentBrowser::makeExampleData("ea.res") 
-            r <- EnrichmentBrowser::gs.ranking(r, signif.only=FALSE)
+            r <- EnrichmentBrowser::gsRanking(r, signif.only=FALSE)
             saveRDS(r, file=out.file)   
         }
     }

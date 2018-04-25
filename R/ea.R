@@ -94,7 +94,7 @@ runDE <- function(exp.list,
     flex <- padj.method == "flexible"
     if(flex) padj.method <- "none"
     
-    ADJP.COL <- EnrichmentBrowser::config.ebrowser("ADJP.COL")
+    ADJP.COL <- EnrichmentBrowser::configEBrowser("ADJP.COL")
     .de <- function(i, ...)
     { 
         se <- EnrichmentBrowser::deAna(i, de.method=de.method, 
@@ -118,8 +118,8 @@ runDE <- function(exp.list,
 .fractDE <- function(se, alpha=0.05, beta=1, freq=c("rel", "abs"))
 {
     freq <- match.arg(freq)
-    FC.COL <- EnrichmentBrowser::config.ebrowser("FC.COL")
-    ADJP.COL <- EnrichmentBrowser::config.ebrowser("ADJP.COL")
+    FC.COL <- EnrichmentBrowser::configEBrowser("FC.COL")
+    ADJP.COL <- EnrichmentBrowser::configEBrowser("ADJP.COL")
 
     fract.p <- sum(rowData(se)[,ADJP.COL] < alpha)
     fract.fc <- sum(abs(rowData(se)[,FC.COL]) > beta)
@@ -150,8 +150,8 @@ runDE <- function(exp.list,
 #' a single \code{\linkS4class{SummarizedExperiment}} is also allowed. 
 #' See the documentation of \code{\link{sbea}} for required minimal annotations.
 #' @param methods Methods for enrichment analysis.  A character vector with
-#' method names chosen from \code{\link{sbea.methods}} and
-#' \code{\link{nbea.methods}}, or user-defined functions
+#' method names chosen from \code{\link{sbeaMethods}} and
+#' \code{\link{nbeaMethods}}, or user-defined functions
 #' implementing methods for enrichment analysis.
 #' @param gs Gene sets, i.e. a list of character vectors of gene IDs.
 #' @param perm Number of permutations of the sample group assignments. 
@@ -196,7 +196,7 @@ runDE <- function(exp.list,
 #' 
 #'     # getting a subset of human KEGG gene sets
 #'     gs.file <- system.file("extdata/hsa_kegg_gs.gmt", package="EnrichmentBrowser")
-#'     kegg.gs <- EnrichmentBrowser::parse.genesets.from.GMT(gs.file)
+#'     kegg.gs <- EnrichmentBrowser::getGenesets(gs.file)
 #' 
 #'     # applying two methods to two datasets 
 #'     res <- runEA(geo2kegg, methods=c("ora", "camera"), gs=kegg.gs, perm=0)
@@ -247,8 +247,8 @@ runEA <- function(exp.list, methods, gs, perm=1000,
 # check on availability of ea packages
 .eaPkgs <- function(ea.methods)
 {
-    sbea.pkgs <- EnrichmentBrowser::config.ebrowser("SBEA.PKGS")
-    nbea.pkgs <- EnrichmentBrowser::config.ebrowser("NBEA.PKGS")
+    sbea.pkgs <- EnrichmentBrowser::configEBrowser("SBEA.PKGS")
+    nbea.pkgs <- EnrichmentBrowser::configEBrowser("NBEA.PKGS")
     ea.pkgs <- c(sbea.pkgs, nbea.pkgs)
     for(m in ea.methods)
         if(m %in% names(ea.pkgs)) 
@@ -272,7 +272,7 @@ runEA <- function(exp.list, methods, gs, perm=1000,
     }
 
     # output
-    res <- EnrichmentBrowser::gs.ranking(res, signif.only=FALSE)
+    res <- EnrichmentBrowser::gsRanking(res, signif.only=FALSE)
 
     if(save2file) .save2file(res, out.dir, method, id, ti[3])
     return(list(runtime=ti[3], ranking=res))
@@ -285,7 +285,7 @@ runEA <- function(exp.list, methods, gs, perm=1000,
 
     # execute
     suppressMessages(
-    if(method %in% EnrichmentBrowser::sbea.methods())
+    if(method %in% EnrichmentBrowser::sbeaMethods())
     {
         ti <- system.time(
             res <- try(

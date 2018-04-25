@@ -146,10 +146,10 @@
     # map IDs hgnc -> entrez
     suppressMessages({
         suppressPackageStartupMessages(
-            tum <- EnrichmentBrowser::map.ids(tum, 
+            tum <- EnrichmentBrowser::idMap(tum, 
                     org="hsa", from="SYMBOL", to="ENTREZID")
         )
-        norm <- EnrichmentBrowser::map.ids(norm, 
+        norm <- EnrichmentBrowser::idMap(norm, 
                     org="hsa", from="SYMBOL", to="ENTREZID")
     })
 

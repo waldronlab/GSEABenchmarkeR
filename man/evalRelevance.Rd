@@ -21,7 +21,7 @@ respective method to the respective dataset.  Resulting gene set rankings
 are assumed to be of class \code{\linkS4class{DataFrame}} in which gene sets
 (required column named \code{GENE.SET}) are ranked according to a ranking
 measure such as a gene set p-value (required column named \code{P.VALUE}).
-See \code{\link{gs.ranking}} for an example.}
+See \code{\link{gsRanking}} for an example.}
 
 \item{rel.ranks}{Relevance score rankings.  A list with an entry for each
 phenotype investigated.  Each entry should be a
@@ -91,7 +91,7 @@ or greater than the one obtained.
 
     # simulate gene set ranking
     ea.ranks <- EnrichmentBrowser::makeExampleData("ea.res")
-    ea.ranks <- EnrichmentBrowser::gs.ranking(ea.ranks, signif.only=FALSE)
+    ea.ranks <- EnrichmentBrowser::gsRanking(ea.ranks, signif.only=FALSE)
 
     # simulated relevance score ranking
     rel.ranks <- ea.ranks
@@ -119,7 +119,7 @@ or greater than the one obtained.
                 function(d)
                 {
                     r <- EnrichmentBrowser::makeExampleData("ea.res") 
-                    r <- EnrichmentBrowser::gs.ranking(r, signif.only=FALSE)
+                    r <- EnrichmentBrowser::gsRanking(r, signif.only=FALSE)
                     return(r)
                 }, simplify=FALSE),
                 simplify=FALSE)

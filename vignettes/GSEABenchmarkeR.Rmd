@@ -169,7 +169,7 @@ table(se$GROUP)
 Note: The `maPreproc` returns datasets consistently mapped to NCBI Entrez
 Gene IDs, which is compatible with most downstream applications. However, 
 mapping to a different ID type such as ENSEMBL IDs or HGNC symbols can also be 
-done using the function `EnrichmentBrowser::map.ids`.  
+done using the function `EnrichmentBrowser::idMap`.  
 
 ## RNA-seq compendium
 
@@ -283,12 +283,12 @@ genes for each dataset or generally excluding ORA methods from the assessment).
 In the following, we demonstrate how to carry out enrichment analysis in a 
 benchmark setup.
 Therefore, we use the collection of human KEGG gene sets as obtained 
-with `get.kegg.genesets` from the `r Biocpkg("EnrichmentBrowser")`
+with `getGenesets` from the `r Biocpkg("EnrichmentBrowser")`
 package.
 
 ```{r getGS}
 library(EnrichmentBrowser)
-kegg.gs <- get.kegg.genesets("hsa")
+kegg.gs <- getGenesets(org="hsa", db="kegg")
 ```
 
 At the core of applying a specific enrichment method to a single dataset is the

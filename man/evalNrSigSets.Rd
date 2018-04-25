@@ -57,7 +57,7 @@ threshold?).
                 function(d)
                 {
                     r <- EnrichmentBrowser::makeExampleData("ea.res") 
-                    r <- EnrichmentBrowser::gs.ranking(r, signif.only=FALSE)
+                    r <- EnrichmentBrowser::gsRanking(r, signif.only=FALSE)
                     return(r)
                 }, simplify=FALSE),
                 simplify=FALSE)

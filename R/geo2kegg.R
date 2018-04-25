@@ -121,8 +121,8 @@ maPreproc <- function(exp.list, parallel=NULL)
     )
 
     # helper function doing the actual job per expression set
-    GRPCOL <- EnrichmentBrowser::config.ebrowser("GRP.COL")
-    BLKCOL <- EnrichmentBrowser::config.ebrowser("BLK.COL")
+    GRPCOL <- EnrichmentBrowser::configEBrowser("GRP.COL")
+    BLKCOL <- EnrichmentBrowser::configEBrowser("BLK.COL")
     .pre <- function(eset)
     {
         # probe 2 gene & annotation

@@ -102,6 +102,7 @@ loadEData <- function(edata, nr.datasets=NULL, cache=TRUE, ...)
     {  
         eid <- basename(edata)
         exp.list <- .getResourceFromCache(rname=eid, update.value=NA)
+        if(!is.null(exp.list)) return(exp.list)
     }
          
     if(interactive())
@@ -217,7 +218,7 @@ writeDE <- function(exp.list, out.dir=NULL)
         gt <- EnrichmentBrowser:::.getGeneAnno(names(xx), "hsa")
         gt <- cbind(gt, rowData(xx, use.names=TRUE))
         gt <- EnrichmentBrowser:::.sortGeneTable(gt)  
-        EZ.COL <- EnrichmentBrowser::config.ebrowser("EZ.COL")
+        EZ.COL <- EnrichmentBrowser::configEBrowser("EZ.COL")
         ind <- gt[,EZ.COL]      
         write.table(gt, file=gt.file, row.names=FALSE, quote=FALSE, sep="\t")
     }
@@ -281,8 +282,8 @@ readDataId2diseaseCodeMap <- function(map.file)
 #' to.
 #' @param data.ids A character vector of dataset IDs.
 #' @param methods Methods for enrichment analysis.  A character vector with
-#' method names typically chosen from \code{\link{sbea.methods}}
-#' and \code{\link{nbea.methods}}, or user-defined functions
+#' method names typically chosen from \code{\link{sbeaMethods}}
+#' and \code{\link{nbeaMethods}}, or user-defined functions
 #' implementing methods for enrichment analysis.
 #' @param type Character. Type of the result. Should be one out of 'runtime',
 #' 'ranking', or 'typeI'. 
@@ -318,7 +319,7 @@ readDataId2diseaseCodeMap <- function(map.file)
 #'             # ranking
 #'             out.file <- sub("txt$", "rds", out.file)
 #'             r <- EnrichmentBrowser::makeExampleData("ea.res") 
-#'             r <- EnrichmentBrowser::gs.ranking(r, signif.only=FALSE)
+#'             r <- EnrichmentBrowser::gsRanking(r, signif.only=FALSE)
 #'             saveRDS(r, file=out.file)   
 #'         }
 #'     }

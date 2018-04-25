@@ -10,8 +10,8 @@ evalTypeIError(methods, exp.list, gs, alpha = 0.05, ea.perm = 1000,
 }
 \arguments{
 \item{methods}{Methods for enrichment analysis.  A character vector with
-method names chosen from \code{EnrichmentBrowser::sbea.methods} and
-\code{EnrichmentBrowser::nbea.methods}, or user-defined functions
+method names chosen from \code{\link{sbeaMethods}} and
+\code{\link{nbeaMethods}}, or user-defined functions
 implementing methods for enrichment analysis.}
 
 \item{exp.list}{Experiment list.  A \code{list} of datasets, each being of
@@ -78,7 +78,7 @@ enrichment analysis when applied to one or more expression datasets.
     # getting a subset of human KEGG gene sets
     gs.file <- system.file("extdata", package="EnrichmentBrowser")
     gs.file <- file.path(gs.file, "hsa_kegg_gs.gmt") 
-    kegg.gs <- EnrichmentBrowser::parse.genesets.from.GMT(gs.file)
+    kegg.gs <- EnrichmentBrowser::getGenesets(gs.file)
 
     # evaluating type I error rate of two methods on two datasets
     # NOTE: using a small number of permutations for demonstration;

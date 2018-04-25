@@ -39,8 +39,8 @@
 #' @param exp.list Experiment list.  A \code{list} of datasets, each being of
 #' class \code{\linkS4class{SummarizedExperiment}}.
 #' @param methods Methods for enrichment analysis.  A character vector with
-#' method names chosen from \code{\link{sbea.methods}} and
-#' \code{\link{nbea.methods}}, or user-defined functions
+#' method names chosen from \code{\link{sbeaMethods}} and
+#' \code{\link{nbeaMethods}}, or user-defined functions
 #' implementing methods for enrichment analysis.
 #' @param gs Gene sets, i.e. a list of character vectors of gene IDs.
 #' @param alpha Numeric. Statistical significance level. Defaults to 0.05.
@@ -94,7 +94,7 @@
 #'     # getting a subset of human KEGG gene sets
 #'     gs.file <- system.file("extdata", package="EnrichmentBrowser")
 #'     gs.file <- file.path(gs.file, "hsa_kegg_gs.gmt") 
-#'     kegg.gs <- EnrichmentBrowser::parse.genesets.from.GMT(gs.file)
+#'     kegg.gs <- EnrichmentBrowser::getGenesets(gs.file)
 #' 
 #'     # evaluating type I error rate of two methods on two datasets
 #'     # NOTE: using a small number of permutations for demonstration;
@@ -124,7 +124,7 @@ evalTypeIError <- function(methods, exp.list,
     
     # setup
     .eaPkgs(methods)
-    GRP.COL <- EnrichmentBrowser::config.ebrowser("GRP.COL")
+    GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
    
     # verbose?
     show.progress <- interactive() && length(exp.list) > 2
@@ -168,8 +168,8 @@ evalTypeIError <- function(methods, exp.list,
 .evalTypeI <- function(method, se, gs, alpha=0.05, ea.perm=1000, tI.perm=1000, 
     perm.mat=NULL, perm.block.size=-1, save2file=FALSE, out.dir=NULL, ...)
 {
-    GRP.COL <- EnrichmentBrowser::config.ebrowser("GRP.COL")
-    GSP.COL <- EnrichmentBrowser::config.ebrowser("GSP.COL")
+    GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
+    GSP.COL <- EnrichmentBrowser::configEBrowser("GSP.COL")
 
     if(length(tI.perm) > 1) tI.perm <- tI.perm[method]
     if(length(ea.perm) > 1) ea.perm <- ea.perm[method]
@@ -286,7 +286,7 @@ evalTypeIError <- function(methods, exp.list,
 #'                 function(d)
 #'                 {
 #'                     r <- EnrichmentBrowser::makeExampleData("ea.res") 
-#'                     r <- EnrichmentBrowser::gs.ranking(r, signif.only=FALSE)
+#'                     r <- EnrichmentBrowser::gsRanking(r, signif.only=FALSE)
 #'                     return(r)
 #'                 }, simplify=FALSE),
 #'                 simplify=FALSE)
@@ -298,7 +298,7 @@ evalTypeIError <- function(methods, exp.list,
 #' @export evalNrSigSets
 evalNrSigSets <- function(ea.ranks, alpha=0.05, padj="none", perc=TRUE)
 {
-    pcol <- EnrichmentBrowser::config.ebrowser("GSP.COL")  
+    pcol <- EnrichmentBrowser::configEBrowser("GSP.COL")  
     res <- sapply(ea.ranks, 
         function(rs) vapply(rs, 
             function(r)
@@ -314,7 +314,7 @@ evalNrSigSets <- function(ea.ranks, alpha=0.05, padj="none", perc=TRUE)
 #' @export
 evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 { 
-    pcol <- EnrichmentBrowser::config.ebrowser("GSP.COL")  
+    pcol <- EnrichmentBrowser::configEBrowser("GSP.COL")  
     res <- sapply(ea.ranks, 
 		function(rs) vapply(rs, 
 			function(r) 
@@ -361,7 +361,7 @@ evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 #' are assumed to be of class \code{\linkS4class{DataFrame}} in which gene sets
 #' (required column named \code{GENE.SET}) are ranked according to a ranking
 #' measure such as a gene set p-value (required column named \code{P.VALUE}).
-#' See \code{\link{gs.ranking}} for an example.
+#' See \code{\link{gsRanking}} for an example.
 #' @param rel.ranks Relevance score rankings.  A list with an entry for each
 #' phenotype investigated.  Each entry should be a
 #' \code{\linkS4class{DataFrame}} in which gene sets (rownames are assumed to
@@ -397,7 +397,7 @@ evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 #'
 #'     # simulate gene set ranking
 #'     ea.ranks <- EnrichmentBrowser::makeExampleData("ea.res")
-#'     ea.ranks <- EnrichmentBrowser::gs.ranking(ea.ranks, signif.only=FALSE)
+#'     ea.ranks <- EnrichmentBrowser::gsRanking(ea.ranks, signif.only=FALSE)
 #' 
 #'     # simulated relevance score ranking
 #'     rel.ranks <- ea.ranks
@@ -425,7 +425,7 @@ evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 #'                 function(d)
 #'                 {
 #'                     r <- EnrichmentBrowser::makeExampleData("ea.res") 
-#'                     r <- EnrichmentBrowser::gs.ranking(r, signif.only=FALSE)
+#'                     r <- EnrichmentBrowser::gsRanking(r, signif.only=FALSE)
 #'                     return(r)
 #'                 }, simplify=FALSE),
 #'                 simplify=FALSE)
@@ -557,8 +557,8 @@ compOpt <- function(rel.ranks, gs.ids, data2pheno=NULL, top=0)
 {
     # compute opt
     dummy.gsp <- seq_along(gs.ids) / length(gs.ids)
-    scol <- EnrichmentBrowser::config.ebrowser("GS.COL")
-    pcol <- EnrichmentBrowser::config.ebrowser("GSP.COL")
+    scol <- EnrichmentBrowser::configEBrowser("GS.COL")
+    pcol <- EnrichmentBrowser::configEBrowser("GSP.COL")
 
     mar <- rel.ranks
     marn <- rownames(mar)[rownames(mar) %in% gs.ids]
@@ -594,8 +594,8 @@ compRand <- function(rel.ranks, gs.ids, data2pheno=NULL, perm=1000)
 {
     gs.ids <- sort(gs.ids)
     dummy.gsp <- seq_along(gs.ids) / length(gs.ids)
-    scol <- EnrichmentBrowser::config.ebrowser("GS.COL")
-    pcol <- EnrichmentBrowser::config.ebrowser("GSP.COL")
+    scol <- EnrichmentBrowser::configEBrowser("GS.COL")
+    pcol <- EnrichmentBrowser::configEBrowser("GSP.COL")
 
     f <- function()
     {
@@ -633,8 +633,8 @@ compRand <- function(rel.ranks, gs.ids, data2pheno=NULL, perm=1000)
 .rel2rel <- function(rel.ranks, gs)
 {
     dummy.gsp <- seq_along(gs) / length(gs)
-    scol <- EnrichmentBrowser::config.ebrowser("GS.COL")
-    pcol <- EnrichmentBrowser::config.ebrowser("GSP.COL")
+    scol <- EnrichmentBrowser::configEBrowser("GS.COL")
+    pcol <- EnrichmentBrowser::configEBrowser("GSP.COL")
 
     m2m <- vapply(names(rel.ranks),
         function(m)
@@ -686,9 +686,8 @@ benchmark <- function(
     {
         message("Loading gene sets ...")
         gs <- match.arg(gs)
-        gs <- ifelse(gs == "kegg",
-            EnrichmentBrowser::get.kegg.genesets(org),
-            EnrichmentBrowser::get.go.genesets(org, toupper(substring(gs,4,5))))
+        if(gs == "kegg") gs <- EnrichmentBrowser::getGenesets(org, db=gs)
+        else EnrichmentBrowser::getGenesets(org, go.onto=toupper(substring(gs,4,5)))
     }
 
     # enrichment analysis
@@ -696,14 +695,14 @@ benchmark <- function(
 
     # method to execute
     methods <- switch(eaType,
-                        sbea = EnrichmentBrowser::sbea.methods(),
-                        nbea = EnrichmentBrowser::nbea.methods(),
-                        c(EnrichmentBrowser::sbea.methods(), 
-                            EnrichmentBrowser::nbea.methods())) 
+                        sbea = EnrichmentBrowser::sbeaMethods(),
+                        nbea = EnrichmentBrowser::nbeaMethods(),
+                        c(EnrichmentBrowser::sbeaMethods(), 
+                            EnrichmentBrowser::nbeaMethods())) 
 
     if(!missing(method)) methods <- union(method, methods)   
 
-    if(any(methods %in% EnrichmentBrowser::nbea.methods()))
+    if(any(methods %in% EnrichmentBrowser::nbeaMethods()))
     {
         # gene regulatory network
         message("Loading gene regulatory network")

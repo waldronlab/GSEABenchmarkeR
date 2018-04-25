@@ -14,8 +14,8 @@ a single \code{\linkS4class{SummarizedExperiment}} is also allowed.
 See the documentation of \code{\link{sbea}} for required minimal annotations.}
 
 \item{methods}{Methods for enrichment analysis.  A character vector with
-method names chosen from \code{EnrichmentBrowser::sbea.methods} and
-\code{EnrichmentBrowser::nbea.methods}, or user-defined functions
+method names chosen from \code{\link{sbeaMethods}} and
+\code{\link{nbeaMethods}}, or user-defined functions
 implementing methods for enrichment analysis.}
 
 \item{gs}{Gene sets, i.e. a list of character vectors of gene IDs.}
@@ -67,7 +67,7 @@ datasets of a compendium.
 
     # getting a subset of human KEGG gene sets
     gs.file <- system.file("extdata/hsa_kegg_gs.gmt", package="EnrichmentBrowser")
-    kegg.gs <- EnrichmentBrowser::parse.genesets.from.GMT(gs.file)
+    kegg.gs <- EnrichmentBrowser::getGenesets(gs.file)
 
     # applying two methods to two datasets 
     res <- runEA(geo2kegg, methods=c("ora", "camera"), gs=kegg.gs, perm=0)
