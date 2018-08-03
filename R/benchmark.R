@@ -169,7 +169,7 @@ evalTypeIError <- function(methods, exp.list,
     perm.mat=NULL, perm.block.size=-1, save2file=FALSE, out.dir=NULL, ...)
 {
     GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
-    GSP.COL <- EnrichmentBrowser::configEBrowser("GSP.COL")
+    PVAL.COL <- EnrichmentBrowser::configEBrowser("PVAL.COL")
 
     if(length(tI.perm) > 1) tI.perm <- tI.perm[method]
     if(length(ea.perm) > 1) ea.perm <- ea.perm[method]
@@ -188,7 +188,7 @@ evalTypeIError <- function(methods, exp.list,
             se <- EnrichmentBrowser::deAna(se, padj.method="none")
         res <- runEA(se, method, gs, ea.perm, ...)
         res <- res$ranking
-        res <- mean(res[[GSP.COL]] < alpha)
+        res <- mean(res[[PVAL.COL]] < alpha)
         return(res)
     }
 
@@ -298,7 +298,7 @@ evalTypeIError <- function(methods, exp.list,
 #' @export evalNrSigSets
 evalNrSigSets <- function(ea.ranks, alpha=0.05, padj="none", perc=TRUE)
 {
-    pcol <- EnrichmentBrowser::configEBrowser("GSP.COL")  
+    pcol <- EnrichmentBrowser::configEBrowser("PVAL.COL")  
     res <- sapply(ea.ranks, 
         function(rs) vapply(rs, 
             function(r)
@@ -314,7 +314,7 @@ evalNrSigSets <- function(ea.ranks, alpha=0.05, padj="none", perc=TRUE)
 #' @export
 evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 { 
-    pcol <- EnrichmentBrowser::configEBrowser("GSP.COL")  
+    pcol <- EnrichmentBrowser::configEBrowser("PVAL.COL")  
     res <- sapply(ea.ranks, 
 		function(rs) vapply(rs, 
 			function(r) 
@@ -558,7 +558,7 @@ compOpt <- function(rel.ranks, gs.ids, data2pheno=NULL, top=0)
     # compute opt
     dummy.gsp <- seq_along(gs.ids) / length(gs.ids)
     scol <- EnrichmentBrowser::configEBrowser("GS.COL")
-    pcol <- EnrichmentBrowser::configEBrowser("GSP.COL")
+    pcol <- EnrichmentBrowser::configEBrowser("PVAL.COL")
 
     mar <- rel.ranks
     marn <- rownames(mar)[rownames(mar) %in% gs.ids]
@@ -595,7 +595,7 @@ compRand <- function(rel.ranks, gs.ids, data2pheno=NULL, perm=1000)
     gs.ids <- sort(gs.ids)
     dummy.gsp <- seq_along(gs.ids) / length(gs.ids)
     scol <- EnrichmentBrowser::configEBrowser("GS.COL")
-    pcol <- EnrichmentBrowser::configEBrowser("GSP.COL")
+    pcol <- EnrichmentBrowser::configEBrowser("PVAL.COL")
 
     f <- function()
     {
@@ -634,7 +634,7 @@ compRand <- function(rel.ranks, gs.ids, data2pheno=NULL, perm=1000)
 {
     dummy.gsp <- seq_along(gs) / length(gs)
     scol <- EnrichmentBrowser::configEBrowser("GS.COL")
-    pcol <- EnrichmentBrowser::configEBrowser("GSP.COL")
+    pcol <- EnrichmentBrowser::configEBrowser("PVAL.COL")
 
     m2m <- vapply(names(rel.ranks),
         function(m)

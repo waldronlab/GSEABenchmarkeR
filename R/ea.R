@@ -88,12 +88,13 @@
 #' 
 #' @export runDE
 runDE <- function(exp.list, 
-    de.method=c("limma", "edgeR", "DESeq"), 
+    de.method=c("limma", "edgeR", "DESeq2"), 
     padj.method="flexible", parallel=NULL, ...)
 {
     flex <- padj.method == "flexible"
     if(flex) padj.method <- "none"
     
+    PCOL <- EnrichmentBrowser::configEBrowser("PVAL.COL")
     ADJP.COL <- EnrichmentBrowser::configEBrowser("ADJP.COL")
     .de <- function(i, ...)
     { 
@@ -102,11 +103,12 @@ runDE <- function(exp.list,
 
         if(flex)
         {
-            padj <- p.adjust(rowData(se)[,ADJP.COL], method="BH")
+            padj <- p.adjust(rowData(se)[,PCOL], method="BH")
             fracSigP <- mean(padj < 0.05, na.rm=TRUE)
             if(fracSigP > 0.25) 
-            padj <- p.adjust(rowData(se)[,ADJP.COL], method="bonf") 
+                padj <- p.adjust(rowData(se)[,PCOL], method="bonf") 
             if(fracSigP > 0.01) rowData(se)[,ADJP.COL] <- padj
+            else rowData(se)[,ADJP.COL] <- rowData(se)[,PCOL]
         }
         return(se)
     }

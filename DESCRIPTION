@@ -1,7 +1,7 @@
 Package: GSEABenchmarkeR
 Type: Package
 Title: Reproducible GSEA Benchmarking
-Version: 1.1.0
+Version: 1.1.1
 Author:
     Ludwig Geistlinger [aut, cre],
     Gergely Csaba [aut],
@@ -64,4 +64,4 @@ biocViews:
     Visualization,
     ReportWriting
 VignetteBuilder: knitr
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0

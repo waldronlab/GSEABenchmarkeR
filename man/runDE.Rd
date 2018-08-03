@@ -6,7 +6,7 @@
 \alias{plotDEDistribution}
 \title{Differential expression analysis for datasets of a compendium}
 \usage{
-runDE(exp.list, de.method = c("limma", "edgeR", "DESeq"),
+runDE(exp.list, de.method = c("limma", "edgeR", "DESeq2"),
   padj.method = "flexible", parallel = NULL, ...)
 
 writeDE(exp.list, out.dir = NULL)
