@@ -12,7 +12,7 @@
 # load TCGA compendium
 #
 .loadTCGA <- function(nr.datasets=NULL, cache=TRUE, mode=c("ehub", "geo"), 
-    data.dir=NULL, min.ctrls=9, min.cpm=2, with.clin.vars=FALSE)
+    data.dir=NULL, min.ctrls=9, min.cpm=2, with.clin.vars=FALSE, paired=TRUE)
 {
     message("Loading TCGA data compendium ...")
     # should a cached version be used?
@@ -29,7 +29,7 @@
     if(mode == "ehub") dat <- .retrieveGSE62944FromEHub(with.clin.vars)
     else dat <- .downloadGSE62944(data.dir, with.clin.vars)
     el <- .splitByCancerType(dat$tum, dat$norm, 
-        nr.datasets, min.ctrls=min.ctrls, min.cpm=min.cpm)
+        nr.datasets, min.ctrls=min.ctrls, min.cpm=min.cpm, paired=paired)
     
     if(interactive()) cacheResource(el, "tcga")
      
@@ -141,7 +141,7 @@
 }
 
 .splitByCancerType <- function(tum, norm, 
-    nr.datasets, min.ctrls=9, min.cpm=2)
+    nr.datasets, min.ctrls=9, min.cpm=2, paired=FALSE)
 {
     # map IDs hgnc -> entrez
     suppressMessages({
@@ -176,15 +176,28 @@
     exp.list <- lapply(rel.cts,
         function(ct) 
         {
-            message(paste(ct, "tumor:", tum.cts[ct], "adj.normal:", norm.cts[ct]))
 
             ctrls <- norm[, norm$type == ct]
             cases <- tum[, tum$type == ct]
 
+            if(paired)
+            {
+                pre.norm <- substring(colnames(ctrls), 1, 12)
+                pre.tum <- substring(colnames(cases), 1, 12)
+                isect <- intersect(pre.tum, pre.norm)    
+                cases <- cases[,match(isect, pre.tum)]
+                ctrls <- ctrls[,match(isect, pre.norm)]    
+            }
+
+            message(paste(ct, "tumor:", ncol(cases), 
+                            "adj.normal:", ncol(ctrls)))
+            
             se <- cbind(cases, ctrls) 
-            colData(se)$GROUP <- c( rep(1, ncol(cases)), rep(0, ncol(ctrls)) )
+            ind <- unique(names(metadata(se)))
+            metadata(se) <- metadata(se)[ind]
+            se$GROUP <- c( rep(1, ncol(cases)), rep(0, ncol(ctrls)) )
+            if(paired) se$BLOCK <- rep(isect, 2)
             metadata(se)$dataId <- ct 
-            metadata(se)$annotation <- "hsa"
             metadata(se)$dataType <- "rseq"
 
             # preprocessing

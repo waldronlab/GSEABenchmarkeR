@@ -107,11 +107,23 @@ plotGSSizeRobustness <- function(mat, what=c("sig.sets", "typeI"))
 #' @export
 plotDEDistribution <- function(exp.list, alpha=0.05, beta=1)
 {
-    x <- lapply(exp.list, function(i) .fractDE(i, alpha=alpha, beta=beta))
+    x <- lapply(exp.list, function(se) .fractDE(se, alpha=alpha, beta=beta))
     x <- do.call(cbind, x)
     plot(x=x["fc",],y=x["p",], 
         xlab="%[abs(log2FC) > 1]", ylab="%[adjp < 0.05]", col="white")
     text(x=x["fc",], y=x["p",], colnames(x), cex=0.7)
+}
+
+#' @rdname runDE
+#' @export
+plotNrSamples <- function(exp.list, xlab="#controls", ylab="#cases")
+{
+    GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
+    nr.ctrls <- vapply(exp.list, function(se) sum(se[[GRP.COL]] == 0), numeric(1))
+    nr.cases <- vapply(exp.list, function(se) sum(se[[GRP.COL]] == 1), numeric(1))
+    par(pch=20)
+    plot(x=nr.ctrls, y=nr.cases, 
+        xlab=xlab, ylab=ylab, col="red")
 }
 
 # plots aggregated relscoresum distribution of enrichment methods over all datasets
