@@ -50,7 +50,7 @@ Suggests:
     BiocStyle,
     knitr,
     rmarkdown
-biocViews:
+biocViews: ImmunoOncology, 
     Microarray,
     RNASeq,
     GeneExpression,
