@@ -162,7 +162,7 @@
     message(paste(names(norm.cts), collapse=", "))
 
     norm.cts.min.ctrls <- norm.cts[norm.cts >= min.ctrls]
-    rel.cts <- names(norm.cts.min.ctrls)[names(norm.cts.min.ctrls) %in% names(tum.cts)] 
+    rel.cts <- intersect(names(norm.cts.min.ctrls), names(tum.cts))
 
     if(!is.null(nr.datasets)) 
     {

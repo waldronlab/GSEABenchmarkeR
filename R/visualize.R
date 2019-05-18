@@ -7,9 +7,6 @@
 # 
 ############################################################
 
-# general boxplot functionality for enrichment method data
-
-
 #' Customized boxplot visualization of benchmark results
 #' 
 #' This is a convenience function to create customized boxplots for specific
@@ -109,9 +106,10 @@ plotDEDistribution <- function(exp.list, alpha=0.05, beta=1)
 {
     x <- lapply(exp.list, function(se) .fractDE(se, alpha=alpha, beta=beta))
     x <- do.call(cbind, x)
+    par(pch=20)
     plot(x=x["fc",],y=x["p",], 
-        xlab="%[abs(log2FC) > 1]", ylab="%[adjp < 0.05]", col="white")
-    text(x=x["fc",], y=x["p",], colnames(x), cex=0.7)
+        xlab="%[abs(log2FC) > 1]", ylab="%[adjp < 0.05]", col="red")
+    text(x=x["fc",], y=x["p",], names(exp.list), cex=0.8, pos=4)
 }
 
 #' @rdname runDE
@@ -122,8 +120,9 @@ plotNrSamples <- function(exp.list, xlab="#controls", ylab="#cases")
     nr.ctrls <- vapply(exp.list, function(se) sum(se[[GRP.COL]] == 0), numeric(1))
     nr.cases <- vapply(exp.list, function(se) sum(se[[GRP.COL]] == 1), numeric(1))
     par(pch=20)
-    plot(x=nr.ctrls, y=nr.cases, 
-        xlab=xlab, ylab=ylab, col="red")
+    plot(x=nr.ctrls, y=nr.cases, xlab=xlab, ylab=ylab, 
+        col="red", xlim=c(0,max(nr.ctrls)), ylim=c(0,max(nr.cases)))
+    text(x=nr.ctrls, y=nr.cases, names(exp.list), cex=0.8, pos=4)
 }
 
 # plots aggregated relscoresum distribution of enrichment methods over all datasets

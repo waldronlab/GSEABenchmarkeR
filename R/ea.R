@@ -221,34 +221,40 @@ runEA <- function(exp.list, methods, gs, perm=1000,
     }
 
     # setup
-    .eaPkgs(methods)
+    if(is.function(methods)) methods <- list(method=methods) 
+    else
+    {   
+        .eaPkgs(methods)
+        names(methods) <- methods
+    }
     nr.meth <- length(methods)
 
     show.progress <- interactive() && nr.meth > 2
     if(show.progress) pb <- txtProgressBar(0, nr.meth, style=3)
 
     if(length(perm) != nr.meth) perm <- rep(perm[1], nr.meth)
-    names(perm) <- methods
-     
-    res <- lapply(methods, 
+    names(perm) <- names(methods)
+    
+    res <- lapply(names(methods), 
         function(m, ...)
         {
             if(show.progress) setTxtProgressBar(pb, match(m, methods))
             r <- .iter(exp.list, .ea, 
-                        method=m, perm=perm[m], ..., parallel=parallel)
+                        method=methods[[m]], perm=perm[m], ..., parallel=parallel)
             return(r)
         },
         gs=gs, save2file=save2file, out.dir=out.dir, ...
     )
    
     if(show.progress) close(pb) 
-    names(res) <- methods
+    names(res) <- names(methods)
     return(res)
 }
 
 # check on availability of ea packages
 .eaPkgs <- function(ea.methods)
 {
+    if(is.list(ea.methods)) ea.methods <- names(ea.methods)
     sbea.pkgs <- EnrichmentBrowser::configEBrowser("SBEA.PKGS")
     nbea.pkgs <- EnrichmentBrowser::configEBrowser("NBEA.PKGS")
     ea.pkgs <- c(sbea.pkgs, nbea.pkgs)
@@ -265,6 +271,7 @@ runEA <- function(exp.list, methods, gs, perm=1000,
     ti <- res$ti
     res <- res$res
 
+    if(is.function(method)) method <- "method"
     if(is(res, "try-error"))
     {
         message(paste(method, "could not be evaluated on", id))
@@ -287,7 +294,7 @@ runEA <- function(exp.list, methods, gs, perm=1000,
 
     # execute
     suppressMessages(
-    if(method %in% EnrichmentBrowser::sbeaMethods())
+    if(is.function(method) || method %in% EnrichmentBrowser::sbeaMethods())
     {
         ti <- system.time(
             res <- try(
