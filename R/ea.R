@@ -1,8 +1,3 @@
-#
-# DE analysis
-#
-
-
 #' Differential expression analysis for datasets of a compendium
 #' 
 #' This function applies selected methods for differential expression (DE)
@@ -61,6 +56,9 @@
 #' @param out.dir Character.  Determines the output directory where DE results
 #' for each dataset are written to.  Defaults to \code{NULL}, which then writes
 #' to a subdir named 'de' in \code{rappdirs::user_data_dir("GSEABenchmarkeR")}.
+#' @param max.na Integer. Determines for which genes a meta fold change is 
+#' computed. Per default, excludes genes for which the fold change is not 
+#' annotated in >= 1/3 of the datasets in \code{exp.list}.
 #' @param ...  Additional arguments passed to \code{EnrichmentBrowser::deAna}.
 #' @return \code{runDE} returns \code{exp.list} with DE measures annotated to
 #' the \code{\link{rowData}} slot of each dataset, \code{writeDE} writes to file,
@@ -78,6 +76,9 @@
 #' 
 #'     # visualization of per-dataset DE distribution
 #'     plotDEDistribution(edat)
+#' 
+#'     # calculating meta fold changes across datasets 
+#'     mfcs <- metaFC(edat, max.na=0) 
 #' 
 #'     # writing DE results to file
 #'     out.dir <- tempdir()
@@ -117,6 +118,37 @@ runDE <- function(exp.list,
     return(exp.list)
 }
 
+#' @rdname runDE
+#' @export
+metaFC <- function(exp.list, max.na=round(length(exp.list) / 3))
+{
+    all.names <- unique(unlist(lapply(exp.list, names)))
+    glen <- length(all.names)
+
+    # fold changes
+    FC.COL <- EnrichmentBrowser::configEBrowser("FC.COL")
+    fcs <- vapply(exp.list, function(d) 
+                    rowData(d,use.names=TRUE)[all.names,FC.COL], 
+                    numeric(glen))
+    rownames(fcs) <- all.names
+
+    # filter out genes not measured in >= 1/3 of datasets
+    few.nas <- rowSums(t(apply(fcs, 1, is.na))) <= max.na
+    fcs <- fcs[few.nas,]
+
+    # weights ~ sample size
+    weights <- vapply(exp.list, ncol, integer(1))
+    weights <- sqrt(weights) 
+
+    # weighted mean
+    wfcs <- apply(fcs, 1, weighted.mean, w=weights, na.rm=TRUE)  
+    wfcs <- wfcs[order(abs(wfcs), decreasing=TRUE)]
+    return(wfcs)
+}
+
+#
+# fraction of DE genes according to p-value and fold change threshold
+#
 .fractDE <- function(se, alpha=0.05, beta=1, freq=c("rel", "abs"))
 {
     freq <- match.arg(freq)
@@ -135,10 +167,6 @@ runDE <- function(exp.list,
     names(res) <- c("p", "fc")
     return(res)
 }
-
-#
-# Enrichment analyis
-#
 
 
 #' Application of enrichment methods to multiple datasets

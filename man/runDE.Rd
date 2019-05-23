@@ -2,16 +2,22 @@
 % Please edit documentation in R/ea.R, R/io.R, R/visualize.R
 \name{runDE}
 \alias{runDE}
+\alias{metaFC}
 \alias{writeDE}
 \alias{plotDEDistribution}
+\alias{plotNrSamples}
 \title{Differential expression analysis for datasets of a compendium}
 \usage{
 runDE(exp.list, de.method = c("limma", "edgeR", "DESeq2"),
   padj.method = "flexible", parallel = NULL, ...)
 
+metaFC(exp.list, max.na = round(length(exp.list)/3))
+
 writeDE(exp.list, out.dir = NULL)
 
 plotDEDistribution(exp.list, alpha = 0.05, beta = 1)
+
+plotNrSamples(exp.list)
 }
 \arguments{
 \item{exp.list}{Experiment list.  A \code{list} of datasets, each being of
@@ -33,6 +39,10 @@ of \code{BiocParallel::registered()} for execution.  If not changed by the
 user, this accordingly defaults to multi-core execution on the local host.}
 
 \item{...}{Additional arguments passed to \code{EnrichmentBrowser::deAna}.}
+
+\item{max.na}{Integer. Determines for which genes a meta fold change is 
+computed. Per default, excludes genes for which the fold change is not 
+annotated in >= 1/3 of the datasets in \code{exp.list}.}
 
 \item{out.dir}{Character.  Determines the output directory where DE results
 for each dataset are written to.  Defaults to \code{NULL}, which then writes
@@ -97,6 +107,9 @@ the assessment.
 
     # visualization of per-dataset DE distribution
     plotDEDistribution(edat)
+
+    # calculating meta fold changes across datasets 
+    mfcs <- metaFC(edat, max.na=0) 
 
     # writing DE results to file
     out.dir <- tempdir()

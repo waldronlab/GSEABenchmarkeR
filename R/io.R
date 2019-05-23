@@ -1,7 +1,3 @@
-#
-# loading expression data 
-#
-
 #' Loading pre-defined and user-defined expression data
 #' 
 #' This function implements a general interface for loading the pre-defined

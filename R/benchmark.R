@@ -504,6 +504,17 @@ evalRelevance <- function( ea.ranks, rel.ranks,
     return(x)
 }
 
+evalROC <- function(ea.ranks, rel.ranks, gs)
+{
+    rel.sets <- rownames(rel.ranks)
+    gs.ids <- vapply(names(gs), 
+                        function(s) unlist(strsplit(s, "_"))[1],
+                        character(1), USE.NAMES=FALSE)
+    sgs <- gs[gs.ids %in% rel.sets]
+    rgs <- relist(sample(unlist(sgs)), skeleton=sgs)    
+    names(rgs) <- paste0("random", seq_along(rgs))
+}
+
 .relScore <- function(ea.ranks, rel.ranks, top=0)
 {
     ids <- vapply(ea.ranks[, "GENE.SET"], 

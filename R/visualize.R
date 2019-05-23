@@ -114,14 +114,14 @@ plotDEDistribution <- function(exp.list, alpha=0.05, beta=1)
 
 #' @rdname runDE
 #' @export
-plotNrSamples <- function(exp.list, xlab="#controls", ylab="#cases")
+plotNrSamples <- function(exp.list)
 {
     GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
     nr.ctrls <- vapply(exp.list, function(se) sum(se[[GRP.COL]] == 0), numeric(1))
     nr.cases <- vapply(exp.list, function(se) sum(se[[GRP.COL]] == 1), numeric(1))
     par(pch=20)
-    plot(x=nr.ctrls, y=nr.cases, xlab=xlab, ylab=ylab, 
-        col="red", xlim=c(0,max(nr.ctrls)), ylim=c(0,max(nr.cases)))
+    plot(x=nr.ctrls, y=nr.cases, xlab="#controls", ylab="#cases", 
+        col="red", xlim=c(0, max(nr.ctrls)), ylim=c(0, max(nr.cases)))
     text(x=nr.ctrls, y=nr.cases, names(exp.list), cex=0.8, pos=4)
 }
 
