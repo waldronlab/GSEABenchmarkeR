@@ -262,7 +262,10 @@ runEA <- function(exp.list, methods, gs, perm=1000,
 
     if(length(perm) != nr.meth) perm <- rep(perm[1], nr.meth)
     names(perm) <- names(methods)
-    
+  
+    for(i in seq_along(exp.list)) 
+        metadata(exp.list[[i]])$dataId <- names(exp.list)[i]
+
     res <- lapply(names(methods), 
         function(m, ...)
         {

@@ -5,8 +5,8 @@
 \title{Evaluation of the type I error rate of enrichment methods}
 \usage{
 evalTypeIError(methods, exp.list, gs, alpha = 0.05, ea.perm = 1000,
-  tI.perm = 1000, perm.block.size = -1, parallel = NULL,
-  save2file = FALSE, out.dir = NULL, ...)
+  tI.perm = 1000, perm.block.size = -1, summarize = TRUE,
+  save2file = FALSE, out.dir = NULL, verbose = TRUE, ...)
 }
 \arguments{
 \item{methods}{Methods for enrichment analysis.  A character vector with
@@ -35,12 +35,9 @@ permutations for different methods.}
 into blocks of the indicated size. Defaults to -1, which indicates to not  
 partition \code{tI.perm}.}
 
-\item{parallel}{Parallel computation mode.  An instance of class
-\code{\linkS4class{BiocParallelParam}}.  See the vignette of the
-\code{BiocParallel} package for switching between serial, multi-core, and
-grid execution.  Defaults to \code{NULL}, which then uses the first element
-of \code{BiocParallel::registered()} for execution.  If not changed by the
-user, this accordingly defaults to multi-core execution on the local host.}
+\item{summarize}{Logical. If \code{TRUE} (default) applies \code{\link{summary}}
+to the vector of type I error rates across \code{tI.perm} permutations of the 
+sample labels. Use \code{FALSE} to return the full vector of type I error rates.}
 
 \item{save2file}{Logical. Should results be saved to file for subsequent
 benchmarking?  Defaults to \code{FALSE}.}
@@ -50,14 +47,15 @@ saved to.  Defaults to \code{NULL}, which then writes to
 \code{rappdirs::user_data_dir("GSEABenchmarkeR")} in case \code{save2file}
 is set to \code{TRUE}.}
 
+\item{verbose}{Logical. Should progress be reported? Defaults to \code{TRUE}.}
+
 \item{...}{Additional arguments passed to the selected enrichment methods.}
 }
 \value{
 A list with an entry for each method applied.  Each method entry is
-a list with an entry for each dataset analyzed.  Each dataset entry is a
-list of length 2, with the first element being the runtime and the second
-element being the gene set ranking, as obtained from applying the respective
-method to the respective dataset.
+a list with an entry for each dataset analyzed.  Each dataset entry is either
+a summary (\code{summarize=TRUE}) or the type I error rates itself 
+(\code{summarize=FALSE}) across \code{tI.perm} permutations of the sample labels.
 }
 \description{
 This function evaluates the type I error rate of selected methods for 

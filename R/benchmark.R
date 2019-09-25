@@ -55,24 +55,21 @@
 #' @param perm.block.size Integer. When running in parallel, splits \code{tI.perm}
 #' into blocks of the indicated size. Defaults to -1, which indicates to not  
 #' partition \code{tI.perm}.
-#' @param parallel Parallel computation mode.  An instance of class
-#' \code{\linkS4class{BiocParallelParam}}.  See the vignette of the
-#' \code{BiocParallel} package for switching between serial, multi-core, and
-#' grid execution.  Defaults to \code{NULL}, which then uses the first element
-#' of \code{BiocParallel::registered()} for execution.  If not changed by the
-#' user, this accordingly defaults to multi-core execution on the local host.
+#' @param summarize Logical. If \code{TRUE} (default) applies \code{\link{summary}}
+#' to the vector of type I error rates across \code{tI.perm} permutations of the 
+#' sample labels. Use \code{FALSE} to return the full vector of type I error rates.
 #' @param save2file Logical. Should results be saved to file for subsequent
 #' benchmarking?  Defaults to \code{FALSE}.
 #' @param out.dir Character.  Determines the output directory where results are
 #' saved to.  Defaults to \code{NULL}, which then writes to
 #' \code{rappdirs::user_data_dir("GSEABenchmarkeR")} in case \code{save2file}
 #' is set to \code{TRUE}.
+#' @param verbose Logical. Should progress be reported? Defaults to \code{TRUE}.
 #' @param ...  Additional arguments passed to the selected enrichment methods.
 #' @return A list with an entry for each method applied.  Each method entry is
-#' a list with an entry for each dataset analyzed.  Each dataset entry is a
-#' list of length 2, with the first element being the runtime and the second
-#' element being the gene set ranking, as obtained from applying the respective
-#' method to the respective dataset.
+#' a list with an entry for each dataset analyzed.  Each dataset entry is either
+#' a summary (\code{summarize=TRUE}) or the type I error rates itself 
+#' (\code{summarize=FALSE}) across \code{tI.perm} permutations of the sample labels. 
 #' @author Ludwig Geistlinger <Ludwig.Geistlinger@@sph.cuny.edu>
 #' @seealso \code{\link{sbea}} and \code{\link{nbea}}
 #' for carrying out set- and network-based enrichment analysis.
@@ -104,9 +101,9 @@
 #'     
 #' 
 #' @export evalTypeIError
-evalTypeIError <- function(methods, exp.list,
-    gs, alpha=0.05, ea.perm=1000, tI.perm=1000,
-    perm.block.size=-1, parallel=NULL, save2file=FALSE, out.dir=NULL, ...)
+evalTypeIError <- function(methods, exp.list, gs, alpha=0.05, 
+    ea.perm=1000, tI.perm=1000, perm.block.size=-1, summarize=TRUE, 
+    save2file=FALSE, out.dir=NULL, verbose=TRUE, ...)
 {
     # singleton call?
     if(is(exp.list, "SummarizedExperiment"))
@@ -116,6 +113,7 @@ evalTypeIError <- function(methods, exp.list,
             res <- .evalTypeI(methods, exp.list, gs, alpha, 
                                 ea.perm[1], tI.perm[1], 
                                 perm.block.size=perm.block.size, 
+                                summarize=summarize,    
                                 save2file=save2file, out.dir=out.dir, ...)
             return(res)
         }
@@ -125,11 +123,15 @@ evalTypeIError <- function(methods, exp.list,
     # setup
     .eaPkgs(methods)
     GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
-   
-    # verbose?
-    show.progress <- interactive() && length(exp.list) > 2
-    if(show.progress) pb <- txtProgressBar(0, length(exp.list), style=3)
-
+    BLK.COL <- EnrichmentBrowser::configEBrowser("BLK.COL")
+  
+    # remove blocking
+    for(i in seq_along(exp.list))
+    {
+        nind <- colnames(colData(exp.list[[i]])) != BLK.COL
+        colData(exp.list[[i]]) <- colData(exp.list[[i]])[,nind]
+    } 
+    
     # different number of permutations for different methods?
     nr.meth <- length(methods)
     if(length(ea.perm) != nr.meth) ea.perm <- rep(ea.perm[1], nr.meth)   
@@ -138,35 +140,40 @@ evalTypeIError <- function(methods, exp.list,
         perm.block.size <- rep(perm.block.size[1], nr.meth)
     
     names(ea.perm) <- names(tI.perm) <- names(perm.block.size) <- methods   
-
-    # iterate over expression datasets 
-    res <- lapply(exp.list, 
-        function(se, ...)
-        {   
-            id <- metadata(se)$dataId
-            if(show.progress) setTxtProgressBar(pb, match(id, names(exp.list)))
+    show.progress <- verbose && length(exp.list) > 2
+    # iterate one method over multiple datasets 
+    .iterD <- function(se, m, pb)
+    {
+        id <- metadata(se)$dataId
+        if(show.progress) setTxtProgressBar(pb, match(id, names(exp.list)))
             
-            # precompute permutation matrix
-            perm.mat <- .getPermMat(se[[GRP.COL]], max(tI.perm))
+        .evalTypeI(m, se, gs, alpha, ea.perm[m], tI.perm[m], 
+                    perm.block.size=perm.block.size, summarize=summarize,
+                    save2file=save2file, out.dir=out.dir, ...)
+    }
 
-            # iterate over methods
-            r <- .iter(methods, .evalTypeI, 
-                        se=se, perm.mat=perm.mat, ..., parallel=parallel)
-            names(r) <- methods
-            return(r)
-        },
-        gs=gs, alpha=alpha, ea.perm=ea.perm, tI.perm=tI.perm, 
-        perm.block.size=perm.block.size, save2file=save2file, out.dir=out.dir, ...
-    )    
-    
-    if(show.progress) close(pb)
-    names(res) <- names(exp.list)
+    # iterate over methods
+    .iterM <- function(m)
+    {
+        if(verbose) message(m)
+        pb <- NULL
+        if(show.progress) pb <- txtProgressBar(0, length(exp.list), style=3)
+
+        res <- lapply(exp.list, .iterD, m=m, pb=pb)
+        names(res) <- names(exp.list)
+        if(show.progress) close(pb)
+        return(res)
+    }
+
+    res <- lapply(methods, .iterM) 
+    names(res) <- methods
     return(res)
 }
 
-
-.evalTypeI <- function(method, se, gs, alpha=0.05, ea.perm=1000, tI.perm=1000, 
-    perm.mat=NULL, perm.block.size=-1, save2file=FALSE, out.dir=NULL, ...)
+# for one method and one dataset
+.evalTypeI <- function(method, se, gs, alpha=0.05, 
+    ea.perm=1000, tI.perm=1000, perm.mat=NULL, perm.block.size=-1, 
+    summarize=TRUE, save2file=FALSE, out.dir=NULL, ...)
 {
     GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
     PVAL.COL <- EnrichmentBrowser::configEBrowser("PVAL.COL")
@@ -180,7 +187,7 @@ evalTypeIError <- function(methods, exp.list,
     else if(tI.perm < ncol(perm.mat)) perm.mat <- perm.mat[,seq_len(tI.perm)]
 
     grid <- seq_len(ncol(perm.mat))
-    .calcFDR <- function(i)
+    .calcFPR <- function(i)
     {
         se[[GRP.COL]] <- perm.mat[,i]    
         # TODO: argument requireDE (for methods such as ora, ebm, ...)
@@ -194,7 +201,7 @@ evalTypeIError <- function(methods, exp.list,
 
     # parallel: one (or more) permutation per core
     serial <- perm.block.size < 0 || ncol(perm.mat) < 10
-    if(serial) res <- vapply(grid, .calcFDR, numeric(1))
+    if(serial) res <- vapply(grid, .calcFPR, numeric(1))
     else if(perm.block.size > 1)
     {
         # split into blocks of defined size 
@@ -203,18 +210,18 @@ evalTypeIError <- function(methods, exp.list,
         last <- blocks[length(blocks)]
         blocks <- lapply(blocks, function(b) 
             c(b, ifelse(b == last, ncol(perm.mat), b + bdiff)))
-        .f <- function(b) vapply(b[1]:b[2], .calcFDR, numeric(1))
+        .f <- function(b) vapply(b[1]:b[2], .calcFPR, numeric(1))
         res <- BiocParallel::bplapply(blocks, .f)
         res <- unlist(res)
     }
     else
     { 
         # each permutation in parallel
-        res <- BiocParallel::bplapply(grid, .calcFDR) 
+        res <- BiocParallel::bplapply(grid, .calcFPR) 
         res <- unlist(res)
     }
 
-    res <- summary(res)
+    if(summarize) res <- summary(res)
     if(save2file) .save2file(res, out.dir, method, metadata(se)$dataId)
     return(res)
 }
@@ -237,6 +244,110 @@ evalTypeIError <- function(methods, exp.list,
                 ifelse(d > 1, "s", "")))
     
     return(perm.mat)
+}
+
+#' Evaluation of enrichment methods on random gene sets
+#' 
+#' This function evaluates the proportion of rejected null hypotheses 
+#' (= the fraction of significant gene sets) of an enrichment method  
+#' when applied to random gene sets of defined size
+#' 
+#' 
+#' @param method Enrichment analysis method.  A character scalar chosen 
+#' from \code{\link{sbeaMethods}} and \code{\link{nbeaMethods}}, or a user-defined
+#' function implementing a method for enrichment analysis.
+#' @param se An expression dataset of class \code{\linkS4class{SummarizedExperiment}}.
+#' @param nr.gs Integer. Number of random gene sets. Defaults to 100. 
+#' @param set.size Integer. Gene set size, i.e. number of genes in each random gene set. 
+#' @param alpha Numeric. Statistical significance level. Defaults to 0.05.
+#' @param padj Character. Method for adjusting p-values to multiple testing.
+#' For available methods see the man page of the stats function
+#' \code{\link{p.adjust}}. Defaults to \code{"none"}.
+#' @param perc Logical.  Should the percentage (between 0 and 100, default)
+#' or the proportion (between 0 and 1) of significant gene sets be returned?
+#' @param reps Integer. Number of replications. Defaults to 100.
+#' @param rep.block.size Integer. When running in parallel, splits \code{reps}
+#' into blocks of the indicated size. Defaults to -1, which indicates to not  
+#' partition \code{reps}.
+#' @param summarize Logical. If \code{TRUE} (default) returns the mean (\code{\link{mean}})
+#' and the standard deviation (\code{\link{sd}}) of the proportion of significant
+#' gene sets across \code{reps} replications. Use \code{FALSE} to return the full 
+#' vector storing the proportion of significant gene sets for each replication.
+#' @param save2file Logical. Should results be saved to file for subsequent
+#' benchmarking?  Defaults to \code{FALSE}.
+#' @param out.dir Character.  Determines the output directory where results are
+#' saved to.  Defaults to \code{NULL}, which then writes to
+#' \code{rappdirs::user_data_dir("GSEABenchmarkeR")} in case \code{save2file}
+#' is set to \code{TRUE}.
+#' @param ...  Additional arguments passed to the selected enrichment method.
+#' @return A named numeric vector of length 2 storing mean and standard deviation
+#' of the proportion of significant gene sets across \code{reps} replications 
+#' (\code{summarize=TRUE}); or a numeric vector of length \code{reps} storing the
+#' the proportion of significant gene sets for each replication itself 
+#' (\code{summarize=FALSE}). 
+#' @author Ludwig Geistlinger <Ludwig.Geistlinger@@sph.cuny.edu>
+#' @seealso \code{\link{sbea}} and \code{\link{nbea}}
+#' for carrying out set- and network-based enrichment analysis.
+#' 
+#' \code{\linkS4class{BiocParallelParam}} and \code{\link{register}} for
+#' configuration of parallel computation.
+#' @examples
+#' 
+#'     # loading three datasets from the GEO2KEGG compendium
+#'     geo2kegg <- loadEData("geo2kegg", nr.datasets=3)
+#'
+#'     # only considering the first 1000 probes for demonstration
+#'     geo2kegg <- lapply(geo2kegg, function(d) d[1:1000,]) 
+#'
+#'     # preprocessing and DE analysis for two of the datasets
+#'     geo2kegg <- maPreproc(geo2kegg[2:3])
+#'     geo2kegg <- runDE(geo2kegg)
+#' 
+#'     evalRandomGS("camera", geo2kegg[[1]], reps=3)
+#'     
+#' 
+#' @export evalRandomGS
+evalRandomGS <- function(method, se, nr.gs=100, set.size=5, 
+    alpha=0.05, padj = "none", perc=TRUE, reps=100, rep.block.size=-1, 
+    summarize=TRUE, save2file=FALSE, out.dir=NULL, ...)
+{
+    PVAL.COL <- EnrichmentBrowser::configEBrowser("PVAL.COL")
+    
+    .eval <- function(i)
+    {
+        gs <- replicate(nr.gs, sample(names(se), set.size), simplify=FALSE)
+        names(gs) <- paste0("gs", seq_len(nr.gs))
+        res <- runEA(se, method, gs, ...)
+        res <- res$ranking
+        res <- p.adjust(res[,PVAL.COL], method=padj)
+        res <- mean(res < alpha)
+        if(perc) res <- round(res * 100, digits=2)
+    }
+
+    serial <- rep.block.size < 0 || reps < 10
+    if(serial) res <- replicate(reps, .eval())
+    else if(rep.block.size > 1)
+    {
+        # split into blocks of defined size 
+        blocks <- seq(1, reps, by=rep.block.size)
+        bdiff <- rep.block.size - 1
+        last <- blocks[length(blocks)]
+        blocks <- lapply(blocks, function(b) 
+            c(b, ifelse(b == last, reps, b + bdiff)))
+        .f <- function(b) vapply(b[1]:b[2], .eval, numeric(1))
+        res <- BiocParallel::bplapply(blocks, .f)
+        res <- unlist(res)
+    }
+    else
+    { 
+        # each permutation in parallel
+        res <- BiocParallel::bplapply(seq_len(reps), .eval) 
+        res <- unlist(res)
+    }
+
+    if(summarize) res <- c(mean=mean(res), sd=sd(res))
+    if(save2file) .save2file(res, out.dir, method, paste0("gs", set.size))
+    return(res)
 }
 
 
@@ -504,16 +615,59 @@ evalRelevance <- function( ea.ranks, rel.ranks,
     return(x)
 }
 
-evalROC <- function(ea.ranks, rel.ranks, gs)
-{
-    rel.sets <- rownames(rel.ranks)
-    gs.ids <- vapply(names(gs), 
-                        function(s) unlist(strsplit(s, "_"))[1],
-                        character(1), USE.NAMES=FALSE)
-    sgs <- gs[gs.ids %in% rel.sets]
-    rgs <- relist(sample(unlist(sgs)), skeleton=sgs)    
-    names(rgs) <- paste0("random", seq_along(rgs))
-}
+#evalROC <- function(ea.ranks, rel.ranks, gs, top=10)
+#{
+#    # create random gene sets matching the rel sets
+#    rel.sets <- rownames(rel.ranks)
+#    gs.ids <- vapply(names(gs), 
+#                        function(s) unlist(strsplit(s, "_"))[1],
+#                        character(1), USE.NAMES=FALSE)
+#    rgs <- relist(sample(unlist(gs)), skeleton=gs)    
+#    rgs <- rgs[gs.ids %in% rel.sets]
+#    names(rgs) <- paste0("random", seq_along(rgs))
+#
+#    # perform EA on the intermixture of real and random GS 
+#    res <- sbea("ora", se=geo2kegg$GSE1297, gs=c(gs,rgs), perm=0)
+#    res <- res$res.tbl
+#    gs.ids <- vapply(res$GENE.SET, 
+#                        function(s) unlist(strsplit(s, "_"))[1],
+#                        character(1), USE.NAMES=FALSE)
+#    ind <- gs.ids %in% c(rel.sets, names(rgs))
+#    res <- res[ind,]
+#    gs.ids <- gs.ids[ind]
+#
+#    # handmade ROC
+#    fp <- function(i) sum(!(gs.ids[seq_len(i)] %in% rel.sets[seq_len(top)])) / (nrow(res)-top)
+#    tp <- function(i) sum(gs.ids[seq_len(i)] %in% rel.sets[seq_len(top)]) / top
+#    fps <- vapply(seq_len(nrow(res)), fp, numeric(1))
+#    tps <- vapply(seq_len(nrow(res)), tp, numeric(1))
+#    o <- order(fps)
+#    plot(fps[o], tps[o], type="l")
+#
+#    # using ROCR
+#    rscores <- vapply(ea.methods, 
+#        function(m) evalRelevance(ma.kegg.ranks[[m]]$GSE1297, mala.kegg$ALZ), 
+#        numeric(1))
+#
+#    auc <- function(ea.ranks, rel.ranks)
+#    {
+#        rel.sets <- rownames(rel.ranks)
+#        r <- 1 - EnrichmentBrowser:::.getRanks(ea.ranks) / 100
+#        gs.ids <- vapply(ea.ranks$GENE.SET, 
+#                        function(s) unlist(strsplit(s, "_"))[1],
+#                        character(1), USE.NAMES=FALSE)
+#        labels <- gs.ids %in% rel.sets[1:10]
+#        pr <- ROCR::prediction(r, ifelse(labels,1,0))
+#        auc <- ROCR::performance(pr, "auc")
+#        auc <- unlist(auc@y.values)    
+#        return(auc)
+#    }
+#
+#    aucs <- vapply(ea.methods, 
+#        function(m) auc(ma.kegg.ranks[[m]]$GSE1297, mala.kegg$ALZ), 
+#        numeric(1))
+#
+#}
 
 .relScore <- function(ea.ranks, rel.ranks, top=0)
 {
