@@ -6,7 +6,7 @@
 #' @importFrom graphics abline axis barplot box boxplot matlines mtext par plot
 #'              points text
 #' @importFrom methods is
-#' @importFrom stats median p.adjust sd weighted.mean
+#' @importFrom stats cor median p.adjust sd weighted.mean
 #' @importFrom utils data read.delim relist setTxtProgressBar txtProgressBar 
 #'              untar write.table
 NULL

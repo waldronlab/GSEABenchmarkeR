@@ -481,16 +481,22 @@ evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 #' @param data2pheno A named character vector where the names correspond to
 #' dataset IDs and the elements of the vector to the corresponding phenotypes
 #' investigated.
-#' @param perc Logical.  Should observed scores be returned as-is or as a
-#' *perc*entage of the respective optimal score. Percentages of the optimal
-#' score are typically easier to interpret and are comparable between datasets
-#' / phenotypes.  Defaults to \code{TRUE}.
+#' @param mode Character. Determines how the relevance score is summarized
+#' across the enrichment analysis ranking. Choose \code{"wsum"} (default) to 
+#' compute a weighted sum of the relevance scores, \code{"auc"} to perform a ROC/AUC 
+#' analysis, or \code{"cor"} to compute a correlation. See Details. 
 #' @param top Integer.  If \code{top} is non-zero, the evaluation will be
 #' restricted to the first \code{top} gene sets of each enrichment analysis
 #' ranking.  Defaults to \code{0}, which will then evaluate the full ranking.
-#' @param rand Logical.  Should gene set rankings be randomized to assess how
-#' likely it is to observe a score equal or greater than the respective
-#' obtained score?  Defaults to \code{FALSE}.
+#' @param ... Additional arguments for computation of the relevance measure
+#' as defined by the \code{mode} argument. This
+#' includes for \code{mode="wsum"}: \itemize{ \item perc: Logical.  Should 
+#' observed scores be returned as-is or as a *perc*entage of the respective 
+#' optimal score. Percentages of the optimal score are typically easier to 
+#' interpret and are comparable between datasets / phenotypes.  Defaults to 
+#' \code{TRUE}. \item rand: Logical.  Should gene set rankings be randomized to 
+#' assess how likely it is to observe a score equal or greater than the respective
+#' obtained score?  Defaults to \code{FALSE}.} And for \code{mode="cor"}:
 #' @param perm Integer. Number of permutations if \code{rand} set to \code{TRUE}.
 #' @param gs.ids Character vector of gene set IDs on which enrichment analysis 
 #' has been carried out.
@@ -562,28 +568,51 @@ evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 #'     evalRelevance(ea.ranks, rel.ranks, d2d)
 #' 
 #' @export evalRelevance
-evalRelevance <- function( ea.ranks, rel.ranks, 
-                            data2pheno, perc=TRUE, top=0, rand=FALSE )
+evalRelevance <- function(ea.ranks, rel.ranks, data2pheno, 
+                            mode=c("wsum", "auc", "cor"),                     
+                            top=0, ...) 
+                    # additional args for wsum: perc=TRUE, rand=FALSE
+                    # additional args for cor: what=c("score", "rank"), 
+                    #                            method=c("pearson", "spearman")
 {
+    mode <- match.arg(mode)
+
     # singleton call?
     is.singleton <- is(ea.ranks, "DataFrame") && is(rel.ranks, "DataFrame")
-    if(is.singleton) return( .relScore(ea.ranks, rel.ranks, top) )
+    if(is.singleton) 
+    {
+        if(mode == "auc") res <- .evalAUC(ea.ranks, rel.ranks, top)
+        else if(mode == "cor") res <- .evalCor(ea.ranks, rel.ranks, ...)
+        else res <- .relScore(ea.ranks, rel.ranks, top)
+        return(res)
+    }
+
+    # iterating over datasets included
+    .iterD <- function(d, mranks)
+    {
+        dmranks <- mranks[[d]]
+        d2p <- data2pheno[[d]]
+        drranks <- rel.ranks[[d2p]]
+        if(mode == "auc") .evalAUC(dmranks, drranks, top)
+        else if (mode == "cor") .evalCor(dmranks, drranks, ...)
+        else .deployScore(d, mranks, rel.ranks, data2pheno, top, type="rel")
+    }
 
     # iterating over enrichment methods included
-    res <- lapply(ea.ranks, 
-        function(mranks)
-        {   
-            # iterating over datasets included
-            meval.res <- vapply( names(mranks), 
-                function(d) .deployScore(d, mranks, rel.ranks, 
-                    data2pheno, top, type="rel"), numeric(1) )
-            return(meval.res)
-        }) 
+    .iterM <- function(mranks) vapply(names(mranks), .iterD, numeric(1), mranks=mranks)
+    res <- lapply(ea.ranks, .iterM) 
 
-    # postprocess missing
     for(i in seq_along(res)) res[[i]] <- res[[i]][names(data2pheno)]
-    x <- do.call(cbind, res)
+    res <- do.call(cbind, res)
 
+    if(mode == "wsum") 
+        res <- .postprocScores(res, ea.ranks, rel.ranks, data2pheno, top, ...)
+    return(res)
+}
+
+.postprocScores <- function(x, ea.ranks, 
+    rel.ranks, data2pheno, top, perc=TRUE, rand=FALSE)
+{
     # get analyzed gene set IDs
     ind <- which.max(lengths(ea.ranks))
     .fspl <- function(n) unlist(strsplit(n, "_"))[1]
@@ -612,62 +641,53 @@ evalRelevance <- function( ea.ranks, rel.ranks,
         x <- cbind(x, rscores)
         colnames(x)[ncol(x)] <- "rand"
     }
+
     return(x)
 }
 
-#evalROC <- function(ea.ranks, rel.ranks, gs, top=10)
-#{
-#    # create random gene sets matching the rel sets
-#    rel.sets <- rownames(rel.ranks)
-#    gs.ids <- vapply(names(gs), 
-#                        function(s) unlist(strsplit(s, "_"))[1],
-#                        character(1), USE.NAMES=FALSE)
-#    rgs <- relist(sample(unlist(gs)), skeleton=gs)    
-#    rgs <- rgs[gs.ids %in% rel.sets]
-#    names(rgs) <- paste0("random", seq_along(rgs))
-#
-#    # perform EA on the intermixture of real and random GS 
-#    res <- sbea("ora", se=geo2kegg$GSE1297, gs=c(gs,rgs), perm=0)
-#    res <- res$res.tbl
-#    gs.ids <- vapply(res$GENE.SET, 
-#                        function(s) unlist(strsplit(s, "_"))[1],
-#                        character(1), USE.NAMES=FALSE)
-#    ind <- gs.ids %in% c(rel.sets, names(rgs))
-#    res <- res[ind,]
-#    gs.ids <- gs.ids[ind]
-#
-#    # handmade ROC
-#    fp <- function(i) sum(!(gs.ids[seq_len(i)] %in% rel.sets[seq_len(top)])) / (nrow(res)-top)
-#    tp <- function(i) sum(gs.ids[seq_len(i)] %in% rel.sets[seq_len(top)]) / top
-#    fps <- vapply(seq_len(nrow(res)), fp, numeric(1))
-#    tps <- vapply(seq_len(nrow(res)), tp, numeric(1))
-#    o <- order(fps)
-#    plot(fps[o], tps[o], type="l")
-#
-#    # using ROCR
-#    rscores <- vapply(ea.methods, 
-#        function(m) evalRelevance(ma.kegg.ranks[[m]]$GSE1297, mala.kegg$ALZ), 
-#        numeric(1))
-#
-#    auc <- function(ea.ranks, rel.ranks)
-#    {
-#        rel.sets <- rownames(rel.ranks)
-#        r <- 1 - EnrichmentBrowser:::.getRanks(ea.ranks) / 100
-#        gs.ids <- vapply(ea.ranks$GENE.SET, 
-#                        function(s) unlist(strsplit(s, "_"))[1],
-#                        character(1), USE.NAMES=FALSE)
-#        labels <- gs.ids %in% rel.sets[1:10]
-#        pr <- ROCR::prediction(r, ifelse(labels,1,0))
-#        auc <- ROCR::performance(pr, "auc")
-#        auc <- unlist(auc@y.values)    
-#        return(auc)
-#    }
-#
-#    aucs <- vapply(ea.methods, 
-#        function(m) auc(ma.kegg.ranks[[m]]$GSE1297, mala.kegg$ALZ), 
-#        numeric(1))
-#
-#}
+.evalAUC <- function(ea.ranks, rel.ranks, top=10)
+{
+    stopifnot(top > 5)
+    EnrichmentBrowser::isAvailable("ROCR", type="software")
+    prediction <- performance <- NULL    
+
+    rel.sets <- rownames(rel.ranks)
+    r <- 1 - EnrichmentBrowser:::.getRanks(ea.ranks) / 100
+    gs.ids <- vapply(ea.ranks$GENE.SET, 
+                    function(s) unlist(strsplit(s, "_"))[1],
+                    character(1), USE.NAMES=FALSE)
+    labels <- gs.ids %in% rel.sets[seq_len(top)]
+    if(all(is.na(r))) return(NA)   
+    
+    pr <- prediction(r, ifelse(labels, 1, 0))
+    auc <- performance(pr, "auc")
+    auc <- unlist(auc@y.values)    
+    return(auc)
+}
+
+.evalCor <- function(ea.ranks, rel.ranks, 
+    what=c("score", "rank"), method=c("pearson", "spearman"))
+{
+    what <- match.arg(what)
+    method <- match.arg(method)
+    
+    # ea weights 
+    weights <- 1 - EnrichmentBrowser:::.getRanks(ea.ranks) / 100
+    gs.ids <- vapply(ea.ranks$GENE.SET, 
+                    function(s) unlist(strsplit(s, "_"))[1],
+                    character(1), USE.NAMES=FALSE)
+    names(weights) <- gs.ids
+    if(all(is.na(weights))) return(NA)   
+ 
+    # rel scores (use score or relative rank)      
+    rel.sets <- rownames(rel.ranks)
+    if(what == "score") scores <- rel.ranks$REL.SCORE
+    else scores <- 1 - seq_len(nrow(rel.ranks)) / nrow(rel.ranks)
+    names(scores) <- rel.sets 
+    scores <- scores[names(weights)]
+
+    cor(weights, scores, use="complete.obs", method=method) 
+}
 
 .relScore <- function(ea.ranks, rel.ranks, top=0)
 {
