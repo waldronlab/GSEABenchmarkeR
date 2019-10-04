@@ -417,11 +417,6 @@ sig.sets
 bpPlot(sig.sets, what="sig.sets")
 ```
 
-<!--
-Note: although the relation sometimes not clearcut, fraction of DE genes is a 
-reasonable baseline.
--->
-
 ## Phenotype relevance
 
 As introduced above, Tarca et al. ([2012](https://doi.org/10.1186/1471-2105-13-136) 
