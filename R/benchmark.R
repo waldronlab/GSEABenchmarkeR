@@ -1,4 +1,4 @@
-############################################################
+###########################################################
 # 
 # author: Ludwig Geistlinger
 # date: 2016-07-29 16:49:12
@@ -481,22 +481,25 @@ evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 #' @param data2pheno A named character vector where the names correspond to
 #' dataset IDs and the elements of the vector to the corresponding phenotypes
 #' investigated.
-#' @param mode Character. Determines how the relevance score is summarized
+#' @param method Character. Determines how the relevance score is summarized
 #' across the enrichment analysis ranking. Choose \code{"wsum"} (default) to 
 #' compute a weighted sum of the relevance scores, \code{"auc"} to perform a ROC/AUC 
-#' analysis, or \code{"cor"} to compute a correlation. See Details. 
+#' analysis, or \code{"cor"} to compute a correlation. This can also be a 
+#' user-defined function for customized behaviors. See Details. 
 #' @param top Integer.  If \code{top} is non-zero, the evaluation will be
 #' restricted to the first \code{top} gene sets of each enrichment analysis
 #' ranking.  Defaults to \code{0}, which will then evaluate the full ranking.
+#' If used with \code{method="auc"}, it defines the number of gene sets at the
+#' top of the relevance ranking that are considered relevant (true positives). 
 #' @param ... Additional arguments for computation of the relevance measure
-#' as defined by the \code{mode} argument. This
-#' includes for \code{mode="wsum"}: \itemize{ \item perc: Logical.  Should 
+#' as defined by the \code{method} argument. This
+#' includes for \code{method="wsum"}: \itemize{ \item perc: Logical.  Should 
 #' observed scores be returned as-is or as a *perc*entage of the respective 
 #' optimal score. Percentages of the optimal score are typically easier to 
 #' interpret and are comparable between datasets / phenotypes.  Defaults to 
 #' \code{TRUE}. \item rand: Logical.  Should gene set rankings be randomized to 
 #' assess how likely it is to observe a score equal or greater than the respective
-#' obtained score?  Defaults to \code{FALSE}.} And for \code{mode="cor"}:
+#' obtained score?  Defaults to \code{FALSE}.}
 #' @param perm Integer. Number of permutations if \code{rand} set to \code{TRUE}.
 #' @param gs.ids Character vector of gene set IDs on which enrichment analysis 
 #' has been carried out.
@@ -568,22 +571,17 @@ evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 #'     evalRelevance(ea.ranks, rel.ranks, d2d)
 #' 
 #' @export evalRelevance
-evalRelevance <- function(ea.ranks, rel.ranks, data2pheno, 
-                            mode=c("wsum", "auc", "cor"),                     
-                            top=0, ...) 
-                    # additional args for wsum: perc=TRUE, rand=FALSE
-                    # additional args for cor: what=c("score", "rank"), 
-                    #                            method=c("pearson", "spearman")
+evalRelevance <- function(ea.ranks, rel.ranks, 
+                            data2pheno, method="wsum", top=0, ...) 
 {
-    mode <- match.arg(mode)
-
     # singleton call?
     is.singleton <- is(ea.ranks, "DataFrame") && is(rel.ranks, "DataFrame")
     if(is.singleton) 
     {
-        if(mode == "auc") res <- .evalAUC(ea.ranks, rel.ranks, top)
-        else if(mode == "cor") res <- .evalCor(ea.ranks, rel.ranks, ...)
-        else res <- .relScore(ea.ranks, rel.ranks, top)
+        res <- if(is.function(method)) method(ea.ranks, rel.ranks, ...) 
+            else if(method == "wsum") .relScore(ea.ranks, rel.ranks, top)
+            else if(method == "cor") .evalCor(ea.ranks, rel.ranks, ...)
+            else .evalAUC(ea.ranks, rel.ranks, top, method)
         return(res)
     }
 
@@ -593,9 +591,12 @@ evalRelevance <- function(ea.ranks, rel.ranks, data2pheno,
         dmranks <- mranks[[d]]
         d2p <- data2pheno[[d]]
         drranks <- rel.ranks[[d2p]]
-        if(mode == "auc") .evalAUC(dmranks, drranks, top)
-        else if (mode == "cor") .evalCor(dmranks, drranks, ...)
-        else .deployScore(d, mranks, rel.ranks, data2pheno, top, type="rel")
+
+        if(is.function(method)) method(dmranks, drranks, ...)
+        else if(method == "wsum")
+            .deployScore(d, mranks, rel.ranks, data2pheno, top, type="rel")
+        else if(method == "cor") .evalCor(dmranks, drranks, ...)
+        else .evalAUC(dmranks, drranks, top, method)
     }
 
     # iterating over enrichment methods included
@@ -605,7 +606,7 @@ evalRelevance <- function(ea.ranks, rel.ranks, data2pheno,
     for(i in seq_along(res)) res[[i]] <- res[[i]][names(data2pheno)]
     res <- do.call(cbind, res)
 
-    if(mode == "wsum") 
+    if(is.character(method) && method == "wsum") 
         res <- .postprocScores(res, ea.ranks, rel.ranks, data2pheno, top, ...)
     return(res)
 }
@@ -645,7 +646,7 @@ evalRelevance <- function(ea.ranks, rel.ranks, data2pheno,
     return(x)
 }
 
-.evalAUC <- function(ea.ranks, rel.ranks, top=10)
+.evalAUC <- function(ea.ranks, rel.ranks, top=10, method)
 {
     stopifnot(top > 5)
     EnrichmentBrowser::isAvailable("ROCR", type="software")
@@ -660,17 +661,15 @@ evalRelevance <- function(ea.ranks, rel.ranks, data2pheno,
     if(all(is.na(r))) return(NA)   
     
     pr <- prediction(r, ifelse(labels, 1, 0))
-    auc <- performance(pr, "auc")
-    auc <- unlist(auc@y.values)    
-    return(auc)
+    res <- performance(pr, method)
+    if(method == "auc") res <- unlist(res@y.values)    
+    return(res)
 }
 
-.evalCor <- function(ea.ranks, rel.ranks, 
-    what=c("score", "rank"), method=c("pearson", "spearman"))
+.evalCor <- function(ea.ranks, rel.ranks, what=c("rank", "score"), cor.method="spearman")
 {
     what <- match.arg(what)
-    method <- match.arg(method)
-    
+ 
     # ea weights 
     weights <- 1 - EnrichmentBrowser:::.getRanks(ea.ranks) / 100
     gs.ids <- vapply(ea.ranks$GENE.SET, 
@@ -686,7 +685,7 @@ evalRelevance <- function(ea.ranks, rel.ranks, data2pheno,
     names(scores) <- rel.sets 
     scores <- scores[names(weights)]
 
-    cor(weights, scores, use="complete.obs", method=method) 
+    cor(weights, scores, use="complete.obs", method=cor.method) 
 }
 
 .relScore <- function(ea.ranks, rel.ranks, top=0)

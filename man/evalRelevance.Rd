@@ -6,8 +6,8 @@
 \alias{compRand}
 \title{Evaluating phenotype relevance of gene set rankings}
 \usage{
-evalRelevance(ea.ranks, rel.ranks, data2pheno, mode = c("wsum", "auc",
-  "cor"), top = 0, ...)
+evalRelevance(ea.ranks, rel.ranks, data2pheno, method = "wsum",
+  top = 0, ...)
 
 compOpt(rel.ranks, gs.ids, data2pheno = NULL, top = 0)
 
@@ -33,14 +33,17 @@ be gene set IDs) are ranked according to a phenotype relevance score
 dataset IDs and the elements of the vector to the corresponding phenotypes
 investigated.}
 
-\item{mode}{Character. Determines how the relevance score is summarized
+\item{method}{Character. Determines how the relevance score is summarized
 across the enrichment analysis ranking. Choose \code{"wsum"} (default) to 
 compute a weighted sum of the relevance scores, \code{"auc"} to perform a ROC/AUC 
-analysis, or \code{"cor"} to compute a correlation. See Details.}
+analysis, or \code{"cor"} to compute a correlation. This can also be a 
+user-defined function for customized behaviors. See Details.}
 
 \item{top}{Integer.  If \code{top} is non-zero, the evaluation will be
 restricted to the first \code{top} gene sets of each enrichment analysis
-ranking.  Defaults to \code{0}, which will then evaluate the full ranking.}
+ranking.  Defaults to \code{0}, which will then evaluate the full ranking.
+If used with \code{method="auc"}, it defines the number of gene sets at the
+top of the relevance ranking that are considered relevant (true positives).}
 
 \item{...}{Additional arguments for computation of the relevance measure
 as defined by the \code{mode} argument. This
@@ -50,7 +53,7 @@ optimal score. Percentages of the optimal score are typically easier to
 interpret and are comparable between datasets / phenotypes.  Defaults to 
 \code{TRUE}. \item rand: Logical.  Should gene set rankings be randomized to 
 assess how likely it is to observe a score equal or greater than the respective
-obtained score?  Defaults to \code{FALSE}.} And for \code{mode="cor"}:}
+obtained score?  Defaults to \code{FALSE}.}}
 
 \item{gs.ids}{Character vector of gene set IDs on which enrichment analysis 
 has been carried out.}
