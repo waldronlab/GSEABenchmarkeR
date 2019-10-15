@@ -121,7 +121,7 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
     }
     
     # setup
-    .eaPkgs(methods)
+    if(!is.function(methods)) .eaPkgs(methods)
     GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
     BLK.COL <- EnrichmentBrowser::configEBrowser("BLK.COL")
   
@@ -173,7 +173,7 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
 # for one method and one dataset
 .evalTypeI <- function(method, se, gs, alpha=0.05, 
     ea.perm=1000, tI.perm=1000, perm.mat=NULL, perm.block.size=-1, 
-    summarize=TRUE, save2file=FALSE, out.dir=NULL, ...)
+    summarize=TRUE, save2file=FALSE, out.dir=NULL, uses.de=FALSE, ...)
 {
     GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
     PVAL.COL <- EnrichmentBrowser::configEBrowser("PVAL.COL")
@@ -187,11 +187,11 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
     else if(tI.perm < ncol(perm.mat)) perm.mat <- perm.mat[,seq_len(tI.perm)]
 
     grid <- seq_len(ncol(perm.mat))
+    if(!is.function(method)) uses.de <- method %in% c("ora", "ebm")
     .calcFPR <- function(i)
     {
         se[[GRP.COL]] <- perm.mat[,i]    
-        # TODO: argument requireDE (for methods such as ora, ebm, ...)
-        if(method %in% c("ora", "ebm")) 
+        if(uses.de) 
             se <- EnrichmentBrowser::deAna(se, padj.method="none")
         res <- runEA(se, method, gs, ea.perm, ...)
         res <- res$ranking
@@ -222,6 +222,7 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
     }
 
     if(summarize) res <- summary(res)
+    if(is.function(method)) method <- "method"
     if(save2file) .save2file(res, out.dir, method, metadata(se)$dataId)
     return(res)
 }
@@ -346,6 +347,7 @@ evalRandomGS <- function(method, se, nr.gs=100, set.size=5,
     }
 
     if(summarize) res <- c(mean=mean(res), sd=sd(res))
+    if(is.function(method)) method <- "method"
     if(save2file) .save2file(res, out.dir, method, paste0("gs", set.size))
     return(res)
 }
@@ -461,10 +463,38 @@ evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 #' relevance score ranking. The ratio between observed and optimal score is
 #' useful for comparing observed scores between datasets / phenotypes.
 #' 
-#' The function \code{compRand} repeatedly applies \code{evalRelevance} to randomly
-#' drawn gene set rankings to assess how likely it is to observe a score equal
-#' or greater than the one obtained.
+#' The function \code{compRand} repeatedly applies \code{evalRelevance} to random
+#' rankings obtained from placing the gene sets randomly along the ranking, thereby
+#' assessing how likely it is to observe a score equal or greater than the one 
+#' obtained.
+#'
+#' It is also possible to inspect other measures for summarizing the phenotype 
+#' relevance, instead of calculating weighted relevance scores sums (argument 
+#' \code{method="wsum"}, default). 
+#' One possibility is to treat the comparison of the EA ranking and the relevance
+#' ranking as a classification problem, and to compute standard classification 
+#' performance measures such as the area under the ROC curve (\code{method="auc"}).
+#' However, this requires to divide the relevance rankings (argument \code{rel.ranks})
+#' into relevant (true positives) and irrelevant (true negatives) gene sets using 
+#' the \code{top} argument.
+#' Instead of \code{method="auc"}, this can also be any other 
+#' performance measure that the ROCR package (\url{https://rocr.bioinf.mpi-sb.mpg.de}) 
+#' implements. For example, \code{method="tnr"} for calculation of the true 
+#' negative rate. Although such classification performance measures are easy to 
+#' interpret, the weighted sum has certain preferable properties such as avoiding
+#' thresholding and accounting for varying degrees of relevance in the relevance
+#' rankings.
 #' 
+#' It is also possible to compute a standard rank-based correlation measure
+#' such as Spearman's correlation (\code{method="cor"}) to compare the similarity
+#' of the enrichment analysis rankings and the relevance rankings. However, this 
+#' might not be optimal for a comparison of an EA ranking going over the full 
+#' gene set vector against the typically much smaller vector of gene sets for 
+#' which a relevance score is annotated. For this scenario, using 
+#' rank correlation reduces the question to "does a \emph{subset of the EA ranking} 
+#' preserve the order of the relevance ranking"; although our question of interest is 
+#' rather "is a \emph{subset of the relevant gene sets} ranked highly in the EA ranking".
+#'
 #' @param ea.ranks Enrichment analysis rankings.  A list with an entry for each
 #' enrichment method applied.  Each entry is a list that stores for each
 #' dataset analyzed the resulting gene set ranking obtained from applying the
@@ -491,6 +521,9 @@ evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 #' ranking.  Defaults to \code{0}, which will then evaluate the full ranking.
 #' If used with \code{method="auc"}, it defines the number of gene sets at the
 #' top of the relevance ranking that are considered relevant (true positives). 
+#' @param rel.thresh Numeric. Relevance score threshold. Restricts relevance 
+#' score rankings (argument \code{rel.ranks}) to gene sets exceeding the threshold
+#' in the \code{REL.SCORE} column. 
 #' @param ... Additional arguments for computation of the relevance measure
 #' as defined by the \code{method} argument. This
 #' includes for \code{method="wsum"}: \itemize{ \item perc: Logical.  Should 
@@ -572,12 +605,13 @@ evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 #' 
 #' @export evalRelevance
 evalRelevance <- function(ea.ranks, rel.ranks, 
-                            data2pheno, method="wsum", top=0, ...) 
+                            data2pheno, method="wsum", top=0, rel.thresh=0, ...) 
 {
     # singleton call?
     is.singleton <- is(ea.ranks, "DataFrame") && is(rel.ranks, "DataFrame")
     if(is.singleton) 
     {
+        if(rel.thresh) rel.ranks <- subset(rel.ranks, REL.SCORE > rel.thresh)
         res <- if(is.function(method)) method(ea.ranks, rel.ranks, ...) 
             else if(method == "wsum") .relScore(ea.ranks, rel.ranks, top)
             else if(method == "cor") .evalCor(ea.ranks, rel.ranks, ...)
@@ -585,6 +619,10 @@ evalRelevance <- function(ea.ranks, rel.ranks,
         return(res)
     }
 
+    if(rel.thresh) 
+        for(i in seq_along(rel.ranks)) 
+            rel.ranks[[i]] <- subset(rel.ranks[[i]], REL.SCORE > rel.thresh)
+    
     # iterating over datasets included
     .iterD <- function(d, mranks)
     {

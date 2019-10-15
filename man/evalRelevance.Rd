@@ -7,7 +7,7 @@
 \title{Evaluating phenotype relevance of gene set rankings}
 \usage{
 evalRelevance(ea.ranks, rel.ranks, data2pheno, method = "wsum",
-  top = 0, ...)
+  top = 0, rel.thresh = 0, ...)
 
 compOpt(rel.ranks, gs.ids, data2pheno = NULL, top = 0)
 
@@ -45,9 +45,13 @@ ranking.  Defaults to \code{0}, which will then evaluate the full ranking.
 If used with \code{method="auc"}, it defines the number of gene sets at the
 top of the relevance ranking that are considered relevant (true positives).}
 
+\item{rel.thresh}{Numeric. Relevance score threshold. Restricts relevance 
+score rankings (argument \code{rel.ranks}) to gene sets exceeding the threshold
+in the \code{REL.SCORE} column.}
+
 \item{...}{Additional arguments for computation of the relevance measure
-as defined by the \code{mode} argument. This
-includes for \code{mode="wsum"}: \itemize{ \item perc: Logical.  Should 
+as defined by the \code{method} argument. This
+includes for \code{method="wsum"}: \itemize{ \item perc: Logical.  Should 
 observed scores be returned as-is or as a *perc*entage of the respective 
 optimal score. Percentages of the optimal score are typically easier to 
 interpret and are comparable between datasets / phenotypes.  Defaults to 
@@ -88,9 +92,37 @@ optimal case in which the enrichment analysis ranking is identical to the
 relevance score ranking. The ratio between observed and optimal score is
 useful for comparing observed scores between datasets / phenotypes.
 
-The function \code{compRand} repeatedly applies \code{evalRelevance} to randomly
-drawn gene set rankings to assess how likely it is to observe a score equal
-or greater than the one obtained.
+The function \code{compRand} repeatedly applies \code{evalRelevance} to random
+rankings obtained from placing the gene sets randomly along the ranking, thereby
+assessing how likely it is to observe a score equal or greater than the one 
+obtained.
+
+It is also possible to inspect other measures for summarizing the phenotype 
+relevance, instead of calculating weighted relevance scores sums (argument 
+\code{method="wsum"}, default). 
+One possibility is to treat the comparison of the EA ranking and the relevance
+ranking as a classification problem, and to compute standard classification 
+performance measures such as the area under the ROC curve (\code{method="auc"}).
+However, this requires to divide the relevance rankings (argument \code{rel.ranks})
+into relevant (true positives) and irrelevant (true negatives) gene sets using 
+the \code{top} argument.
+Instead of \code{method="auc"}, this can also be any other 
+performance measure that the ROCR package (\url{https://rocr.bioinf.mpi-sb.mpg.de}) 
+implements. For example, \code{method="tnr"} for calculation of the true 
+negative rate. Although such classification performance measures are easy to 
+interpret, the weighted sum has certain preferable properties such as avoiding
+thresholding and accounting for varying degrees of relevance in the relevance
+rankings.
+
+It is also possible to compute a standard rank-based correlation measure
+such as Spearman's correlation (\code{method="cor"}) to compare the similarity
+of the enrichment analysis rankings and the relevance rankings. However, this 
+might not be optimal for a comparison of an EA ranking going over the full 
+gene set vector against the typically much smaller vector of gene sets for 
+which a relevance score is annotated. For this scenario, using 
+rank correlation reduces the question to "does a \emph{subset of the EA ranking} 
+preserve the order of the relevance ranking"; although our question of interest is 
+rather "is a \emph{subset of the relevant gene sets} ranked highly in the EA ranking".
 }
 \examples{
 
