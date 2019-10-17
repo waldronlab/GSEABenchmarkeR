@@ -22,7 +22,7 @@
 #' @param what Character.  Determines how the plot is customized.  One of
 #' \itemize{ \item runtime: displays runtime of methods across datasets, \item
 #' sig.sets: displays percentage of significant gene sets, \item rel.sets:
-#' displays phenotype relevance scores.  }
+#' displays phenotype relevance scores, \item: displays type I error rates.}
 #' @return None. Plots to a graphics device.
 #' @author Ludwig Geistlinger <Ludwig.Geistlinger@@sph.cuny.edu>
 #' @seealso \code{\link{evalNrSigSets}} to evaluate fractions of significant 

@@ -238,7 +238,7 @@ writeDE <- function(exp.list, out.dir=NULL)
 #' @return A named character vector where each element of the vector is a
 #' disease code and the names are the dataset IDs.
 #' @author Ludwig Geistlinger <Ludwig.Geistlinger@@sph.cuny.edu>
-#' @seealso \code{evalApply} for evaluating phenotype relevance of gene set
+#' @seealso \code{evalRelevance} for evaluating phenotype relevance of gene set
 #' rankings.
 #' @examples
 #' 

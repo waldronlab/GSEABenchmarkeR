@@ -40,8 +40,8 @@
 #' class \code{\linkS4class{SummarizedExperiment}}.
 #' @param methods Methods for enrichment analysis.  A character vector with
 #' method names chosen from \code{\link{sbeaMethods}} and
-#' \code{\link{nbeaMethods}}, or user-defined functions
-#' implementing methods for enrichment analysis.
+#' \code{\link{nbeaMethods}}, or a user-defined function
+#' implementing a method for enrichment analysis.
 #' @param gs Gene sets, i.e. a list of character vectors of gene IDs.
 #' @param alpha Numeric. Statistical significance level. Defaults to 0.05.
 #' @param ea.perm Integer. Number of permutations of the sample group assignments 
@@ -68,7 +68,7 @@
 #' @param ...  Additional arguments passed to the selected enrichment methods.
 #' @return A list with an entry for each method applied.  Each method entry is
 #' a list with an entry for each dataset analyzed.  Each dataset entry is either
-#' a summary (\code{summarize=TRUE}) or the type I error rates itself 
+#' a summary (\code{summarize=TRUE}) or the full vector of type I error rates
 #' (\code{summarize=FALSE}) across \code{tI.perm} permutations of the sample labels. 
 #' @author Ludwig Geistlinger <Ludwig.Geistlinger@@sph.cuny.edu>
 #' @seealso \code{\link{sbea}} and \code{\link{nbea}}
@@ -186,8 +186,8 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
     if(is.null(perm.mat)) perm.mat <- .getPermMat(se[[GRP.COL]], tI.perm)
     else if(tI.perm < ncol(perm.mat)) perm.mat <- perm.mat[,seq_len(tI.perm)]
 
-    grid <- seq_len(ncol(perm.mat))
     if(!is.function(method)) uses.de <- method %in% c("ora", "ebm")
+
     .calcFPR <- function(i)
     {
         se[[GRP.COL]] <- perm.mat[,i]    
@@ -199,27 +199,7 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
         return(res)
     }
 
-    # parallel: one (or more) permutation per core
-    serial <- perm.block.size < 0 || ncol(perm.mat) < 10
-    if(serial) res <- vapply(grid, .calcFPR, numeric(1))
-    else if(perm.block.size > 1)
-    {
-        # split into blocks of defined size 
-        blocks <- seq(1, ncol(perm.mat), by=perm.block.size)
-        bdiff <- perm.block.size - 1
-        last <- blocks[length(blocks)]
-        blocks <- lapply(blocks, function(b) 
-            c(b, ifelse(b == last, ncol(perm.mat), b + bdiff)))
-        .f <- function(b) vapply(b[1]:b[2], .calcFPR, numeric(1))
-        res <- BiocParallel::bplapply(blocks, .f)
-        res <- unlist(res)
-    }
-    else
-    { 
-        # each permutation in parallel
-        res <- BiocParallel::bplapply(grid, .calcFPR) 
-        res <- unlist(res)
-    }
+    res <- .execPermBlocks(.calcFPR, ncol(perm.mat), perm.block.size)
 
     if(summarize) res <- summary(res)
     if(is.function(method)) method <- "method"
@@ -325,33 +305,41 @@ evalRandomGS <- function(method, se, nr.gs=100, set.size=5,
         if(perc) res <- round(res * 100, digits=2)
     }
 
-    serial <- rep.block.size < 0 || reps < 10
-    if(serial) res <- replicate(reps, .eval())
-    else if(rep.block.size > 1)
-    {
-        # split into blocks of defined size 
-        blocks <- seq(1, reps, by=rep.block.size)
-        bdiff <- rep.block.size - 1
-        last <- blocks[length(blocks)]
-        blocks <- lapply(blocks, function(b) 
-            c(b, ifelse(b == last, reps, b + bdiff)))
-        .f <- function(b) vapply(b[1]:b[2], .eval, numeric(1))
-        res <- BiocParallel::bplapply(blocks, .f)
-        res <- unlist(res)
-    }
-    else
-    { 
-        # each permutation in parallel
-        res <- BiocParallel::bplapply(seq_len(reps), .eval) 
-        res <- unlist(res)
-    }
-
+    res <- .execPermBlocks(.eval, reps, rep.block.size)
+    
     if(summarize) res <- c(mean=mean(res), sd=sd(res))
     if(is.function(method)) method <- "method"
     if(save2file) .save2file(res, out.dir, method, paste0("gs", set.size))
     return(res)
 }
 
+.execPermBlocks <- function(evalF, nr.perms, perm.block.size)
+{
+    grid <- seq_len(nr.perms)
+    serial <- perm.block.size < 0 || nr.perms < 10
+
+    if(serial) res <- vapply(grid, evalF, numeric(1))
+    else if(perm.block.size > 1)
+    {
+        # split into blocks of defined size 
+        blocks <- seq(1, nr.perms, by=perm.block.size)
+        bdiff <- perm.block.size - 1
+        last <- blocks[length(blocks)]
+        .gb <- function(b) c(b, ifelse(b == last, nr.perms, b + bdiff))
+        blocks <- lapply(blocks, .gb)
+        .f <- function(b) vapply(b[1]:b[2], evalF, numeric(1))
+        res <- BiocParallel::bplapply(blocks, .f)
+        res <- unlist(res)
+    }
+    else
+    { 
+        # each permutation in parallel
+        res <- BiocParallel::bplapply(grid, evalF) 
+        res <- unlist(res)
+    }
+
+    return(res)
+}
 
 #' Evaluating gene set rankings for the number of (significant) sets
 #' 
@@ -501,7 +489,7 @@ evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 #' respective method to the respective dataset.  Resulting gene set rankings
 #' are assumed to be of class \code{\linkS4class{DataFrame}} in which gene sets
 #' (required column named \code{GENE.SET}) are ranked according to a ranking
-#' measure such as a gene set p-value (required column named \code{P.VALUE}).
+#' measure such as a gene set p-value (required column named \code{PVAL}).
 #' See \code{\link{gsRanking}} for an example.
 #' @param rel.ranks Relevance score rankings.  A list with an entry for each
 #' phenotype investigated.  Each entry should be a
@@ -537,8 +525,8 @@ evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 #' @param gs.ids Character vector of gene set IDs on which enrichment analysis 
 #' has been carried out.
 #' @return A numeric matrix (rows = datasets, columns = methods) storing in
-#' each cell the relevance score sum obtained from applying the respective
-#' method to the respective dataset.
+#' each cell the chosen relevance measure (score, AUC, cor) obtained from 
+#' applying the respective enrichment method to the respective expression dataset.
 #' @author Ludwig Geistlinger <Ludwig.Geistlinger@@sph.cuny.edu>
 #' @seealso \code{runEA} to apply enrichment methods to multiple datasets;
 #' \code{readResults} to read saved rankings as an input for the eval-functions;
@@ -809,6 +797,30 @@ compRand <- function(rel.ranks, gs.ids, data2pheno=NULL, perm=1000)
                 }, numeric(1) )
 
     return(rand)
+}
+
+.compPerm <- function(method, se, gs, ea.perm=1000, rel.ranks, 
+    reps=1000, perm.mat=NULL, perm.block.size=-1, uses.de=FALSE, ...)
+{
+    GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
+
+    # is permutation matrix given as arg? 
+    if(is.null(perm.mat)) perm.mat <- .getPermMat(se[[GRP.COL]], reps)
+    else if(reps < ncol(perm.mat)) perm.mat <- perm.mat[,seq_len(reps)]
+
+    if(!is.function(method)) uses.de <- method %in% c("ora", "ebm")
+
+    .eval <- function(i)
+    {
+        se[[GRP.COL]] <- perm.mat[,i]    
+        if(uses.de) 
+            se <- EnrichmentBrowser::deAna(se, padj.method="none")
+        res <- runEA(se, method, gs, ea.perm, ...)
+        ea.ranks <- res$ranking
+        evalRelevance(ea.ranks, rel.ranks)
+    }
+
+    .execPermBlocks(.eval, ncol(perm.mat), perm.block.size)
 }
  
 # compute random score for one particular relevance ranking, eg ALZ

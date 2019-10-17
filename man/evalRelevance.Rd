@@ -20,7 +20,7 @@ dataset analyzed the resulting gene set ranking obtained from applying the
 respective method to the respective dataset.  Resulting gene set rankings
 are assumed to be of class \code{\linkS4class{DataFrame}} in which gene sets
 (required column named \code{GENE.SET}) are ranked according to a ranking
-measure such as a gene set p-value (required column named \code{P.VALUE}).
+measure such as a gene set p-value (required column named \code{PVAL}).
 See \code{\link{gsRanking}} for an example.}
 
 \item{rel.ranks}{Relevance score rankings.  A list with an entry for each
@@ -66,8 +66,8 @@ has been carried out.}
 }
 \value{
 A numeric matrix (rows = datasets, columns = methods) storing in
-each cell the relevance score sum obtained from applying the respective
-method to the respective dataset.
+each cell the chosen relevance measure (score, AUC, cor) obtained from 
+applying the respective enrichment method to the respective expression dataset.
 }
 \description{
 This function evaluates gene set rankings obtained from the application of

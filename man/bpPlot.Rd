@@ -16,7 +16,7 @@ dataset IDs.}
 \item{what}{Character.  Determines how the plot is customized.  One of
 \itemize{ \item runtime: displays runtime of methods across datasets, \item
 sig.sets: displays percentage of significant gene sets, \item rel.sets:
-displays phenotype relevance scores.  }}
+displays phenotype relevance scores, \item: displays type I error rates.}}
 }
 \value{
 None. Plots to a graphics device.

@@ -1,35 +1,23 @@
-# GSEABenchmarkeR 1.6.0
+CHANGES IN VERSION 1.6.0
+-------------------------
 
-* New function `evalTypeIError` for type I error rate evalution by sample permutation:
-  - evaluation of one or more enrichment methods on one ore more expression datasets
-  - support for splitting permutations into blocks of defined size, and invoking 
-    parallel evaluation of the partitions 
-    
-* New function `evalRandomGS` for evaluation of random gene sets:
-  - estimates proportion of rejected null hypotheses (= fraction of significant 
-    gene sets) of an enrichment method when applied to random gene sets of defined size
-  - evaluation of one or more enrichment methods on an expression dataset of choice
-
-* New argument `method` to the `evalRelevance` function for the evaluation
-  of phenotype relevance of gene set rankings, choices include:
-  - "wsum": computes a weighted sum of the relevance scores (default),
-  - "auc": performs a ROC/AUC analysis based on the ROCR package,
-  - "cor": computes a standard correlation measure such as Spearman's rank correlation,
-  - a user-defined function for customized behaviors.
-
-* New argument `se` to the `compRand` function for assessing the significance of
-  an observed relevance score based on randomized gene set rankings:
-
-* metaFC
-
-* exploratory plots plotDEDistribution and plotNrSamples
-
-* Extended support for user-defined benchmarking inputs: 
-  - 
-  -
-  -  
-
-
-# GSEABenchmarkeR 1.0.0
-
-* Package released to Bioc-devel
+    o New function `evalTypeIError` for type I error rate evalution by sample permutation:
+      - evaluation of one or more enrichment methods on one or more expression datasets
+      - support for splitting permutations into blocks of defined size, and invoking 
+        parallel evaluation of the partitions 
+    o New function `evalRandomGS` for evaluation of random gene sets:
+      - estimates proportion of rejected null hypotheses (= fraction of significant 
+        gene sets) of an enrichment method when applied to random gene sets of defined size
+      - evaluation of one or more enrichment methods on an expression dataset of choice
+    o New argument `method` to the `evalRelevance` function for the evaluation
+      of phenotype relevance of gene set rankings, choices include:
+      - "wsum": computes a weighted sum of the relevance scores (default),
+      - "auc": performs a ROC/AUC analysis based on the ROCR package,
+      - "cor": computes a standard correlation measure such as Spearman's rank correlation,
+      - a user-defined function for customized behaviors.
+    o New function `metaFC` for summarizing fold changes of individual datasets 
+      across a compendium of expression datasets
+    o New functions `plotDEDistribution` and `plotNrSamples` for exploring 
+      differential expression and sample size across a compendium of expression datasets
+    o Extended support for user-defined benchmarking inputs including simplified 
+      plug-in of user-defined enrichment methods (thanks to Marcel Ramos @LiNk-NY)

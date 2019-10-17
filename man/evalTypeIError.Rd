@@ -11,8 +11,8 @@ evalTypeIError(methods, exp.list, gs, alpha = 0.05, ea.perm = 1000,
 \arguments{
 \item{methods}{Methods for enrichment analysis.  A character vector with
 method names chosen from \code{\link{sbeaMethods}} and
-\code{\link{nbeaMethods}}, or user-defined functions
-implementing methods for enrichment analysis.}
+\code{\link{nbeaMethods}}, or a user-defined function
+implementing a method for enrichment analysis.}
 
 \item{exp.list}{Experiment list.  A \code{list} of datasets, each being of
 class \code{\linkS4class{SummarizedExperiment}}.}
@@ -54,7 +54,7 @@ is set to \code{TRUE}.}
 \value{
 A list with an entry for each method applied.  Each method entry is
 a list with an entry for each dataset analyzed.  Each dataset entry is either
-a summary (\code{summarize=TRUE}) or the type I error rates itself 
+a summary (\code{summarize=TRUE}) or the full vector of type I error rates
 (\code{summarize=FALSE}) across \code{tI.perm} permutations of the sample labels.
 }
 \description{

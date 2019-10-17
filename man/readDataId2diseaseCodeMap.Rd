@@ -27,7 +27,7 @@ disease codes.
 
 }
 \seealso{
-\code{evalApply} for evaluating phenotype relevance of gene set
+\code{evalRelevance} for evaluating phenotype relevance of gene set
 rankings.
 }
 \author{
