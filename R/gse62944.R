@@ -75,6 +75,7 @@
         data.dir <- rappdirs::user_data_dir("GSEABenchmarkeR")
 
     message("Downloading GSE62944 from GEO ...")
+    EnrichmentBrowser::isAvailable("GEOquery", type="software")
     GEOquery::getGEOSuppFiles("GSE62944", baseDir=data.dir)
     data.dir <- file.path(data.dir, "GSE62944")
     message(paste("Data files are stored under:", data.dir))
