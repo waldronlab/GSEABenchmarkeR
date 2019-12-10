@@ -43,7 +43,14 @@ binary grouping (tumor vs. normal)?  }}
 }
 \value{
 A \code{list} of datasets, typically of class
-\code{\linkS4class{SummarizedExperiment}}.
+\code{\linkS4class{SummarizedExperiment}}. 
+
+Note that \code{loadEData("geo2kegg", preproc = FALSE)} (the default) 
+returns the original microarray probe level data as a list of 
+\code{\linkS4class{ExpressionSet}} objects. Use \code{preproc = TRUE} or
+the \code{\link{maPreproc}} function to summarize the probe level
+data to gene level data and to obtain a \code{list} of 
+\code{\linkS4class{SummarizedExperiment}} objects.
 }
 \description{
 This function implements a general interface for loading the pre-defined
@@ -91,7 +98,8 @@ Cancer Genome Atlas leads to improved analysis results.  Bioinformatics,
 31(22):3666-72.
 }
 \seealso{
-\code{\linkS4class{SummarizedExperiment}}
+\code{\linkS4class{SummarizedExperiment}}, 
+\code{\linkS4class{ExpressionSet}}, \code{\link{maPreproc}}
 }
 \author{
 Ludwig Geistlinger <Ludwig.Geistlinger@sph.cuny.edu>

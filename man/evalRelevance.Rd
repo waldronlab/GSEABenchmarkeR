@@ -6,8 +6,15 @@
 \alias{compRand}
 \title{Evaluating phenotype relevance of gene set rankings}
 \usage{
-evalRelevance(ea.ranks, rel.ranks, data2pheno, method = "wsum",
-  top = 0, rel.thresh = 0, ...)
+evalRelevance(
+  ea.ranks,
+  rel.ranks,
+  data2pheno,
+  method = "wsum",
+  top = 0,
+  rel.thresh = 0,
+  ...
+)
 
 compOpt(rel.ranks, gs.ids, data2pheno = NULL, top = 0)
 

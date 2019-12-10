@@ -47,9 +47,17 @@
 #' kept to allow for more advanced sample groupings in addition to the default
 #' binary grouping (tumor vs. normal)?  }
 #' @return A \code{list} of datasets, typically of class
-#' \code{\linkS4class{SummarizedExperiment}}.
+#' \code{\linkS4class{SummarizedExperiment}}. 
+#'
+#' Note that \code{loadEData("geo2kegg", preproc = FALSE)} (the default) 
+#' returns the original microarray probe level data as a list of 
+#' \code{\linkS4class{ExpressionSet}} objects. Use \code{preproc = TRUE} or
+#' the \code{\link{maPreproc}} function to summarize the probe level
+#' data to gene level data and to obtain a \code{list} of 
+#' \code{\linkS4class{SummarizedExperiment}} objects.
 #' @author Ludwig Geistlinger <Ludwig.Geistlinger@@sph.cuny.edu>
-#' @seealso \code{\linkS4class{SummarizedExperiment}}
+#' @seealso \code{\linkS4class{SummarizedExperiment}}, 
+#' \code{\linkS4class{ExpressionSet}}, \code{\link{maPreproc}}
 #' @references Tarca et al. (2012) Down-weighting overlapping genes improves
 #' gene set analysis.  BMC Bioinformatics, 13:136.
 #' 

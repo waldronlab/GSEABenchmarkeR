@@ -8,8 +8,13 @@
 \alias{plotNrSamples}
 \title{Differential expression analysis for datasets of a compendium}
 \usage{
-runDE(exp.list, de.method = c("limma", "edgeR", "DESeq2"),
-  padj.method = "flexible", parallel = NULL, ...)
+runDE(
+  exp.list,
+  de.method = c("limma", "edgeR", "DESeq2"),
+  padj.method = "flexible",
+  parallel = NULL,
+  ...
+)
 
 metaFC(exp.list, max.na = round(length(exp.list)/3))
 

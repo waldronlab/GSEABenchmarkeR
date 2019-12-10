@@ -4,8 +4,16 @@
 \alias{runEA}
 \title{Application of enrichment methods to multiple datasets}
 \usage{
-runEA(exp.list, methods, gs, perm = 1000, parallel = NULL,
-  save2file = FALSE, out.dir = NULL, ...)
+runEA(
+  exp.list,
+  methods,
+  gs,
+  perm = 1000,
+  parallel = NULL,
+  save2file = FALSE,
+  out.dir = NULL,
+  ...
+)
 }
 \arguments{
 \item{exp.list}{Experiment list.  A \code{list} of datasets, each being of

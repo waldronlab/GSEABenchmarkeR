@@ -4,8 +4,12 @@
 \alias{readResults}
 \title{Reading results of enrichment analysis}
 \usage{
-readResults(data.dir, data.ids, methods, type = c("runtime", "ranking",
-  "typeI"))
+readResults(
+  data.dir,
+  data.ids,
+  methods,
+  type = c("runtime", "ranking", "typeI")
+)
 }
 \arguments{
 \item{data.dir}{Character.  The data directory where results have been saved
