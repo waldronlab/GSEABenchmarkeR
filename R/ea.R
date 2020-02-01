@@ -245,11 +245,11 @@ runEA <- function(exp.list, methods, gs, perm=1000,
                         save2file=save2file, out.dir=out.dir, ...)
             return(res)
         }
-        exp.list <- list(exp.list)
+        exp.list <- list(se = exp.list)
     }
 
     # setup
-    if(is.function(methods)) methods <- list(method=methods) 
+    if(is.function(methods)) methods <- list(method = methods) 
     else
     {   
         .eaPkgs(methods)
@@ -263,8 +263,9 @@ runEA <- function(exp.list, methods, gs, perm=1000,
     if(length(perm) != nr.meth) perm <- rep(perm[1], nr.meth)
     names(perm) <- names(methods)
   
-    for(i in seq_along(exp.list)) 
-        metadata(exp.list[[i]])$dataId <- names(exp.list)[i]
+    for(i in seq_along(exp.list))
+        if(is.null(metadata(exp.list[[i]])$dataId))
+            metadata(exp.list[[i]])$dataId <- names(exp.list)[i]
 
     res <- lapply(names(methods), 
         function(m, ...)
