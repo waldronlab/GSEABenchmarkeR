@@ -21,10 +21,12 @@ class \code{\linkS4class{SummarizedExperiment}}. In case of just one dataset
 a single \code{\linkS4class{SummarizedExperiment}} is also allowed. 
 See the documentation of \code{\link{sbea}} for required minimal annotations.}
 
-\item{methods}{Methods for enrichment analysis.  A character vector with
-method names chosen from \code{\link{sbeaMethods}} and
-\code{\link{nbeaMethods}}, or user-defined functions
-implementing methods for enrichment analysis.}
+\item{methods}{Methods for enrichment analysis.  This can be either \itemize{ 
+\item a character vector with method names chosen from \code{\link{sbeaMethods}}
+and \code{\link{nbeaMethods}}, 
+\item a user-defined function implementing a method for enrichment analysis, or
+\item a named list, containing pre-defined and/or user-defined enrichment methods.
+See examples.}}
 
 \item{gs}{Gene sets, i.e. a list of character vectors of gene IDs.}
 
@@ -79,7 +81,22 @@ datasets of a compendium.
 
     # applying two methods to two datasets 
     res <- runEA(geo2kegg, methods=c("ora", "camera"), gs=kegg.gs, perm=0)
-    
+
+    # applying a user-defined enrichment method
+    dummySBEA <- function(se, gs) 
+    {
+         sig.ps <- sample(seq(0, 0.05, length=1000), 5)
+         nsig.ps <- sample(seq(0.1, 1, length=1000), length(gs)-5)
+         ps <- sample(c(sig.ps, nsig.ps), length(gs))
+         names(ps) <- names(gs)
+         return(ps)
+    }  
+    res <- runEA(geo2kegg, methods=dummySBEA, gs=kegg.gs)
+
+    # applying a mix of pre-defined and user-defined methods
+    methods <- list(camera = "camera", dummySBEA = dummySBEA)
+    res <- runEA(geo2kegg, methods, gs=kegg.gs, perm=0)   
+
 
 }
 \seealso{

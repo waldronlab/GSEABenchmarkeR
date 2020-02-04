@@ -179,10 +179,12 @@ metaFC <- function(exp.list, max.na=round(length(exp.list) / 3))
 #' class \code{\linkS4class{SummarizedExperiment}}. In case of just one dataset
 #' a single \code{\linkS4class{SummarizedExperiment}} is also allowed. 
 #' See the documentation of \code{\link{sbea}} for required minimal annotations.
-#' @param methods Methods for enrichment analysis.  A character vector with
-#' method names chosen from \code{\link{sbeaMethods}} and
-#' \code{\link{nbeaMethods}}, or user-defined functions
-#' implementing methods for enrichment analysis.
+#' @param methods Methods for enrichment analysis.  This can be either \itemize{ 
+#' \item a character vector with method names chosen from \code{\link{sbeaMethods}}
+#' and \code{\link{nbeaMethods}}, 
+#' \item a user-defined function implementing a method for enrichment analysis, or
+#' \item a named list, containing pre-defined and/or user-defined enrichment methods.
+#' See examples.}
 #' @param gs Gene sets, i.e. a list of character vectors of gene IDs.
 #' @param perm Number of permutations of the sample group assignments. 
 #' Defaults to 1000. Can also be an integer vector matching
@@ -230,32 +232,39 @@ metaFC <- function(exp.list, max.na=round(length(exp.list) / 3))
 #' 
 #'     # applying two methods to two datasets 
 #'     res <- runEA(geo2kegg, methods=c("ora", "camera"), gs=kegg.gs, perm=0)
-#'     
 #' 
+#'     # applying a user-defined enrichment method
+#'     dummySBEA <- function(se, gs) 
+#'     {
+#'          sig.ps <- sample(seq(0, 0.05, length=1000), 5)
+#'          nsig.ps <- sample(seq(0.1, 1, length=1000), length(gs)-5)
+#'          ps <- sample(c(sig.ps, nsig.ps), length(gs))
+#'          names(ps) <- names(gs)
+#'          return(ps)
+#'     }  
+#'     res <- runEA(geo2kegg, methods=dummySBEA, gs=kegg.gs)
+#'
+#'     # applying a mix of pre-defined and user-defined methods
+#'     methods <- list(camera = "camera", dummySBEA = dummySBEA)
+#'     res <- runEA(geo2kegg, methods, gs=kegg.gs, perm=0)   
+#'
+#'
 #' @export runEA
 runEA <- function(exp.list, methods, gs, perm=1000,
     parallel=NULL, save2file=FALSE, out.dir=NULL, ...)
 {
+    # setup
+    methods <- .methods2list(methods)
+    nr.meth <- length(methods)
+    .eaPkgs(methods)
+
     # singleton call?
     if(is(exp.list, "SummarizedExperiment"))
     {
-        if(length(methods) == 1)
-        {
-            res <- .ea(exp.list, methods, gs, perm[1], 
-                        save2file=save2file, out.dir=out.dir, ...)
-            return(res)
-        }
-        exp.list <- list(se = exp.list)
+        did <- metadata(exp.list)$dataId
+        exp.list <- list(exp.list)
+        names(exp.list) <- ifelse(is.null(did), "se", did)
     }
-
-    # setup
-    if(is.function(methods)) methods <- list(method = methods) 
-    else
-    {   
-        .eaPkgs(methods)
-        names(methods) <- methods
-    }
-    nr.meth <- length(methods)
 
     show.progress <- interactive() && nr.meth > 2
     if(show.progress) pb <- txtProgressBar(0, nr.meth, style=3)
@@ -271,9 +280,7 @@ runEA <- function(exp.list, methods, gs, perm=1000,
         function(m, ...)
         {
             if(show.progress) setTxtProgressBar(pb, match(m, methods))
-            r <- .iter(exp.list, .ea, 
-                        method=methods[[m]], perm=perm[m], ..., parallel=parallel)
-            return(r)
+            .iter(exp.list, .ea, method=methods[m], perm=perm[m], ..., parallel=parallel)
         },
         gs=gs, save2file=save2file, out.dir=out.dir, ...
     )
@@ -283,10 +290,23 @@ runEA <- function(exp.list, methods, gs, perm=1000,
     return(res)
 }
 
+.methods2list <- function(methods)
+{
+    if(is.function(methods)) methods <- list(method = methods)
+    else if(is.character(methods)) names(methods) <- methods
+    else if(is.list(methods))
+    {
+        if(is.null(names(methods))) 
+            stop(paste("\'methods\' need to be given as",
+                    "function, character vector, or named list"))
+    }
+    methods
+}
+
 # check on availability of ea packages
 .eaPkgs <- function(ea.methods)
 {
-    if(is.list(ea.methods)) ea.methods <- names(ea.methods)
+    ea.methods <- names(ea.methods)
     sbea.pkgs <- EnrichmentBrowser::configEBrowser("SBEA.PKGS")
     nbea.pkgs <- EnrichmentBrowser::configEBrowser("NBEA.PKGS")
     ea.pkgs <- c(sbea.pkgs, nbea.pkgs)
@@ -299,11 +319,11 @@ runEA <- function(exp.list, methods, gs, perm=1000,
 .ea <- function(se, method, gs, perm=1000, save2file=FALSE, out.dir=NULL, ...)
 {
     id <- metadata(se)$dataId
-    res <- .execEA(method, se, gs, perm, ...)
+    res <- .execEA(method[[1]], se, gs, perm, ...)
     ti <- res$ti
     res <- res$res
 
-    if(is.function(method)) method <- "method"
+    method <- names(method)
     if(is(res, "try-error"))
     {
         message(paste(method, "could not be evaluated on", id))
@@ -312,11 +332,9 @@ runEA <- function(exp.list, methods, gs, perm=1000,
         return(NULL)
     }
 
-    # output
     res <- EnrichmentBrowser::gsRanking(res, signif.only=FALSE)
-
     if(save2file) .save2file(res, out.dir, method, id, ti[3])
-    return(list(runtime=ti[3], ranking=res))
+    list(runtime = ti[3], ranking = res)
 }
 
 .execEA <- function(method, se, gs, perm, ...)
@@ -344,7 +362,7 @@ runEA <- function(exp.list, methods, gs, perm=1000,
     })
     sink() ## undo silencing
     close(f)
-    return(list(res=res,ti=ti))
+    list(res = res, ti = ti)
 }
 
 .save2file <- function(res, out.dir, method, id, ti=NULL)
