@@ -20,7 +20,7 @@
     {  
         # ignore all other arguments 
         el <- .getResourceFromCache(rname="tcga", update.value=NA)
-        if(!is.null(el)) return(el)
+        if(!is.null(el)) return(el[seq_len(min(nr.datasets, length(el)))])
     }      
  
     # otherwise download it

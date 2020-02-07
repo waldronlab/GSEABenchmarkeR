@@ -191,8 +191,7 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
     .calcFPR <- function(i)
     {
         se[[GRP.COL]] <- perm.mat[,i]    
-        if(uses.de) 
-            se <- EnrichmentBrowser::deAna(se, padj.method="none")
+        if(uses.de) se <- EnrichmentBrowser::deAna(se)
         res <- runEA(se, method, gs, ea.perm, ...)
         res <- res$ranking
         res <- mean(res[[PVAL.COL]] < alpha)

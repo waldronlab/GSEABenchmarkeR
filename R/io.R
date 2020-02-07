@@ -85,12 +85,12 @@
 #' @export loadEData
 loadEData <- function(edata, nr.datasets=NULL, cache=TRUE, ...)
 {
-    if(edata=="geo2kegg") data.ids <- .loadGEO2KEGG(nr.datasets, cache, ...)
-    else if(edata=="tcga") data.ids <- .loadTCGA(nr.datasets, cache, ...)
+    if(edata=="geo2kegg") exp.list <- .loadGEO2KEGG(nr.datasets, cache, ...)
+    else if(edata=="tcga") exp.list <- .loadTCGA(nr.datasets, cache, ...)
     else if(file.exists(edata)) 
-        data.ids <- .loadEDataFromFile(edata, nr.datasets, cache)
+        exp.list <- .loadEDataFromFile(edata, nr.datasets, cache)
     else stop("edata must be \'geo2kegg\', \'tcga\' or an absolute file path")
-    return(data.ids)
+    return(exp.list)
 }
 
 #
@@ -106,7 +106,7 @@ loadEData <- function(edata, nr.datasets=NULL, cache=TRUE, ...)
     {  
         eid <- basename(edata)
         exp.list <- .getResourceFromCache(rname=eid, update.value=NA)
-        if(!is.null(exp.list)) return(exp.list)
+        if(!is.null(exp.list)) return(exp.list[data.ids])
     }
          
     if(interactive())

@@ -29,7 +29,7 @@
         # using a cached version ignores all other arguments
         # such as nr.datasets, de.only, ... 
         el <- .getResourceFromCache(rname="geo2kegg", update.value=NA)
-        if(!is.null(el)) return(el)
+        if(!is.null(el)) return(el[intersect(data.ids, names(el))])
     }       
 
     # if not, create from package
