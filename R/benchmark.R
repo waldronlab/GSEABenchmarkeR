@@ -177,6 +177,7 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
 {
     GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
     PVAL.COL <- EnrichmentBrowser::configEBrowser("PVAL.COL")
+    ADJP.COL <- EnrichmentBrowser::configEBrowser("ADJP.COL")
 
     if(length(tI.perm) > 1) tI.perm <- tI.perm[method]
     if(length(ea.perm) > 1) ea.perm <- ea.perm[method]
@@ -191,8 +192,11 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
     .calcFPR <- function(i)
     {
         se[[GRP.COL]] <- perm.mat[,i]    
-        if(uses.de) 
-            se <- EnrichmentBrowser::deAna(se, padj.method="none")
+        if(uses.de)
+        { 
+            se <- EnrichmentBrowser::deAna(se)
+            rowData(se)[[ADJP.COL]] <- rowData(se)[[PVAL.COL]]
+        }
         res <- runEA(se, method, gs, ea.perm, ...)
         res <- res$ranking
         res <- mean(res[[PVAL.COL]] < alpha)
