@@ -279,7 +279,7 @@ runEA <- function(exp.list, methods, gs, perm=1000,
     res <- lapply(names(methods), 
         function(m, ...)
         {
-            if(show.progress) setTxtProgressBar(pb, match(m, methods))
+            if(show.progress) setTxtProgressBar(pb, match(m, names(methods)))
             .iter(exp.list, .ea, method=methods[m], perm=perm[m], ..., parallel=parallel)
         },
         gs=gs, save2file=save2file, out.dir=out.dir, ...

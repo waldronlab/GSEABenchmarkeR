@@ -38,10 +38,12 @@
 #' 
 #' @param exp.list Experiment list.  A \code{list} of datasets, each being of
 #' class \code{\linkS4class{SummarizedExperiment}}.
-#' @param methods Methods for enrichment analysis.  A character vector with
-#' method names chosen from \code{\link{sbeaMethods}} and
-#' \code{\link{nbeaMethods}}, or a user-defined function
-#' implementing a method for enrichment analysis.
+#' @param methods Methods for enrichment analysis.  This can be either \itemize{ 
+#' \item a character vector with method names chosen from \code{\link{sbeaMethods}}
+#' and \code{\link{nbeaMethods}}, 
+#' \item a user-defined function implementing a method for enrichment analysis, or
+#' \item a named list, containing pre-defined and/or user-defined enrichment methods.
+#' See examples.}
 #' @param gs Gene sets, i.e. a list of character vectors of gene IDs.
 #' @param alpha Numeric. Statistical significance level. Defaults to 0.05.
 #' @param ea.perm Integer. Number of permutations of the sample group assignments 
@@ -98,33 +100,41 @@
 #'     #       for a meaningful evaluation tI.perm should be >= 1000   
 #'     res <- evalTypeIError(geo2kegg, methods=c("ora", 
 #'              "camera"), gs=kegg.gs, ea.perm=0, tI.perm=3)
-#'     
+#'
+#'     # applying a user-defined enrichment method ...
+#'     # ... or a mix of pre-defined and user-defined methods
+#'     dummySBEA <- function(se, gs) 
+#'     {
+#'          sig.ps <- sample(seq(0, 0.05, length=1000), 5)
+#'          nsig.ps <- sample(seq(0.1, 1, length=1000), length(gs)-5)
+#'          ps <- sample(c(sig.ps, nsig.ps), length(gs))
+#'          names(ps) <- names(gs)
+#'          return(ps)
+#'     }  
+#'
+#'     methods <- list(camera = "camera", dummySBEA = dummySBEA)
+#'     res <- evalTypeIError(methods, geo2kegg, gs=kegg.gs, tI.perm=3)   
 #' 
 #' @export evalTypeIError
 evalTypeIError <- function(methods, exp.list, gs, alpha=0.05, 
     ea.perm=1000, tI.perm=1000, perm.block.size=-1, summarize=TRUE, 
     save2file=FALSE, out.dir=NULL, verbose=TRUE, ...)
 {
+    # setup
+    GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
+    BLK.COL <- EnrichmentBrowser::configEBrowser("BLK.COL")
+    methods <- .methods2list(methods)
+    nr.meth <- length(methods)
+    .eaPkgs(methods)
+
     # singleton call?
     if(is(exp.list, "SummarizedExperiment"))
     {
-        if(length(methods) == 1)
-        {
-            res <- .evalTypeI(methods, exp.list, gs, alpha, 
-                                ea.perm[1], tI.perm[1], 
-                                perm.block.size=perm.block.size, 
-                                summarize=summarize,    
-                                save2file=save2file, out.dir=out.dir, ...)
-            return(res)
-        }
+        did <- metadata(exp.list)$dataId 
         exp.list <- list(exp.list)
+        names(exp.list) <- ifelse(is.null(did), "se", did)
     }
     
-    # setup
-    if(!is.function(methods)) .eaPkgs(methods)
-    GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
-    BLK.COL <- EnrichmentBrowser::configEBrowser("BLK.COL")
-  
     # remove blocking
     for(i in seq_along(exp.list))
     {
@@ -133,23 +143,23 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
     } 
     
     # different number of permutations for different methods?
-    nr.meth <- length(methods)
     if(length(ea.perm) != nr.meth) ea.perm <- rep(ea.perm[1], nr.meth)   
     if(length(tI.perm) != nr.meth) tI.perm <- rep(tI.perm[1], nr.meth)
     if(length(perm.block.size) != nr.meth) 
         perm.block.size <- rep(perm.block.size[1], nr.meth)
     
-    names(ea.perm) <- names(tI.perm) <- names(perm.block.size) <- methods   
+    names(ea.perm) <- names(tI.perm) <- names(perm.block.size) <- names(methods)
     show.progress <- verbose && length(exp.list) > 2
+
     # iterate one method over multiple datasets 
     .iterD <- function(se, m, pb)
     {
         id <- metadata(se)$dataId
         if(show.progress) setTxtProgressBar(pb, match(id, names(exp.list)))
             
-        .evalTypeI(m, se, gs, alpha, ea.perm[m], tI.perm[m], 
-                    perm.block.size=perm.block.size, summarize=summarize,
-                    save2file=save2file, out.dir=out.dir, ...)
+        .evalTypeI(methods[m], se, gs, alpha, ea.perm[m], tI.perm[m], 
+                    perm.block.size = perm.block.size, summarize = summarize,
+                    save2file = save2file, out.dir = out.dir, ...)
     }
 
     # iterate over methods
@@ -159,14 +169,14 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
         pb <- NULL
         if(show.progress) pb <- txtProgressBar(0, length(exp.list), style=3)
 
-        res <- lapply(exp.list, .iterD, m=m, pb=pb)
+        res <- lapply(exp.list, .iterD, m = m, pb = pb)
         names(res) <- names(exp.list)
         if(show.progress) close(pb)
         return(res)
     }
 
-    res <- lapply(methods, .iterM) 
-    names(res) <- methods
+    res <- lapply(names(methods), .iterM) 
+    names(res) <- names(methods)
     return(res)
 }
 
@@ -177,32 +187,36 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
 {
     GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
     PVAL.COL <- EnrichmentBrowser::configEBrowser("PVAL.COL")
+    ADJP.COL <- EnrichmentBrowser::configEBrowser("ADJP.COL")
 
-    if(length(tI.perm) > 1) tI.perm <- tI.perm[method]
-    if(length(ea.perm) > 1) ea.perm <- ea.perm[method]
-    if(length(perm.block.size) > 1) perm.block.size <- perm.block.size[method]
+    if(length(tI.perm) > 1) tI.perm <- tI.perm[names(method)]
+    if(length(ea.perm) > 1) ea.perm <- ea.perm[names(method)]
+    if(length(perm.block.size) > 1) 
+        perm.block.size <- perm.block.size[names(method)]
 
     # is permutation matrix given as arg? 
     if(is.null(perm.mat)) perm.mat <- .getPermMat(se[[GRP.COL]], tI.perm)
     else if(tI.perm < ncol(perm.mat)) perm.mat <- perm.mat[,seq_len(tI.perm)]
 
-    if(!is.function(method)) uses.de <- method %in% c("ora", "ebm")
+    if(!is.function(method[[1]])) uses.de <- names(method) %in% c("ora", "ebm")
 
     .calcFPR <- function(i)
     {
         se[[GRP.COL]] <- perm.mat[,i]    
-        if(uses.de) se <- EnrichmentBrowser::deAna(se)
+        if(uses.de)
+        { 
+            se <- EnrichmentBrowser::deAna(se)
+            rowData(se)[[ADJP.COL]] <- rowData(se)[[PVAL.COL]] 
+        }
         res <- runEA(se, method, gs, ea.perm, ...)
-        res <- res$ranking
-        res <- mean(res[[PVAL.COL]] < alpha)
-        return(res)
+        res <- res[[1]][[1]]$ranking
+        mean(res[[PVAL.COL]] < alpha)
     }
 
     res <- .execPermBlocks(.calcFPR, ncol(perm.mat), perm.block.size)
 
     if(summarize) res <- summary(res)
-    if(is.function(method)) method <- "method"
-    if(save2file) .save2file(res, out.dir, method, metadata(se)$dataId)
+    if(save2file) .save2file(res, out.dir, names(method), metadata(se)$dataId)
     return(res)
 }
 
@@ -298,7 +312,7 @@ evalRandomGS <- function(method, se, nr.gs=100, set.size=5,
         gs <- replicate(nr.gs, sample(names(se), set.size), simplify=FALSE)
         names(gs) <- paste0("gs", seq_len(nr.gs))
         res <- runEA(se, method, gs, ...)
-        res <- res$ranking
+        res <- res[[1]][[1]]$ranking
         res <- p.adjust(res[,PVAL.COL], method=padj)
         res <- mean(res < alpha)
         if(perc) res <- round(res * 100, digits=2)
@@ -802,6 +816,8 @@ compRand <- function(rel.ranks, gs.ids, data2pheno=NULL, perm=1000)
     reps=1000, perm.mat=NULL, perm.block.size=-1, uses.de=FALSE, ...)
 {
     GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
+    PVAL.COL <- EnrichmentBrowser::configEBrowser("PVAL.COL")
+    ADJP.COL <- EnrichmentBrowser::configEBrowser("ADJP.COL")
 
     # is permutation matrix given as arg? 
     if(is.null(perm.mat)) perm.mat <- .getPermMat(se[[GRP.COL]], reps)
@@ -812,10 +828,13 @@ compRand <- function(rel.ranks, gs.ids, data2pheno=NULL, perm=1000)
     .eval <- function(i)
     {
         se[[GRP.COL]] <- perm.mat[,i]    
-        if(uses.de) 
-            se <- EnrichmentBrowser::deAna(se, padj.method="none")
+        if(uses.de)
+        {
+            se <- EnrichmentBrowser::deAna(se)
+            rowData(se)[[ADJP.COL]] <- rowData(se)[[PVAL.COL]]
+        }
         res <- runEA(se, method, gs, ea.perm, ...)
-        ea.ranks <- res$ranking
+        ea.ranks <- res[[1]][[1]]$ranking
         evalRelevance(ea.ranks, rel.ranks)
     }
 

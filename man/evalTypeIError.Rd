@@ -20,10 +20,12 @@ evalTypeIError(
 )
 }
 \arguments{
-\item{methods}{Methods for enrichment analysis.  A character vector with
-method names chosen from \code{\link{sbeaMethods}} and
-\code{\link{nbeaMethods}}, or a user-defined function
-implementing a method for enrichment analysis.}
+\item{methods}{Methods for enrichment analysis.  This can be either \itemize{ 
+\item a character vector with method names chosen from \code{\link{sbeaMethods}}
+and \code{\link{nbeaMethods}}, 
+\item a user-defined function implementing a method for enrichment analysis, or
+\item a named list, containing pre-defined and/or user-defined enrichment methods.
+See examples.}}
 
 \item{exp.list}{Experiment list.  A \code{list} of datasets, each being of
 class \code{\linkS4class{SummarizedExperiment}}.}
@@ -94,7 +96,20 @@ enrichment analysis when applied to one or more expression datasets.
     #       for a meaningful evaluation tI.perm should be >= 1000   
     res <- evalTypeIError(geo2kegg, methods=c("ora", 
              "camera"), gs=kegg.gs, ea.perm=0, tI.perm=3)
-    
+
+    # applying a user-defined enrichment method ...
+    # ... or a mix of pre-defined and user-defined methods
+    dummySBEA <- function(se, gs) 
+    {
+         sig.ps <- sample(seq(0, 0.05, length=1000), 5)
+         nsig.ps <- sample(seq(0.1, 1, length=1000), length(gs)-5)
+         ps <- sample(c(sig.ps, nsig.ps), length(gs))
+         names(ps) <- names(gs)
+         return(ps)
+    }  
+
+    methods <- list(camera = "camera", dummySBEA = dummySBEA)
+    res <- evalTypeIError(methods, geo2kegg, gs=kegg.gs, tI.perm=3)   
 
 }
 \seealso{
