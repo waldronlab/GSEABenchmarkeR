@@ -30,6 +30,29 @@ suppressPackageStartupMessages({
 })
 ```
 
+# Purpose of the package
+
+The purpose of the `r Biocpkg("GSEABenchmarkeR")` package is to compare the performance 
+of different methods for gene set enrichment analysis across many gene expression 
+datasets.
+ 
+Users interested in conducting gene set enrichment analysis for a specific dataset
+of choice are recommended to use the `r Biocpkg("EnrichmentBrowser")` package instead.
+
+In other words,
+
+- if you are interested in analyzing a particular microarray or RNA-seq dataset,
+e.g. a case-control study where you want to find out which GO terms / KEGG pathways 
+are enriched for differentially expressed genes, i.e. your primary goal is  
+_biological interpretation of a specific dataset under investigation_, then use 
+the `r Biocpkg("EnrichmentBrowser")` package.
+
+- if you want to assess the performance (runtime, type I error rate, etc) of  
+different enrichment methods across many datasets and in certain simulated setups - 
+i.e. your primary goal is to  
+_understand methodological aspects and compare methods against each other_,
+then use the `r Biocpkg("GSEABenchmarkeR")` package.
+
 # Setup
 Although gene set enrichment analysis (GSEA) has become an integral part of 
 high-throughput gene expression data analysis, the assessment of enrichment 
