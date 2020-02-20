@@ -23,7 +23,7 @@ compRand(rel.ranks, gs.ids, data2pheno = NULL, perm = 1000)
 \arguments{
 \item{ea.ranks}{Enrichment analysis rankings.  A list with an entry for each
 enrichment method applied.  Each entry is a list that stores for each
-dataset analyzed the resulting gene set ranking obtained from applying the
+dataset analyzed the resulting gene set ranking, obtained from applying the
 respective method to the respective dataset.  Resulting gene set rankings
 are assumed to be of class \code{\linkS4class{DataFrame}} in which gene sets
 (required column named \code{GENE.SET}) are ranked according to a ranking

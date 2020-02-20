@@ -16,13 +16,13 @@
 #' 
 #' @param data Numeric matrix or list of numeric vectors.  In case of a matrix,
 #' column names are assumed to be method names and rownames are assumed to be
-#' dataset IDs.  In case of a list, names are assumed to be methods names and
+#' dataset IDs.  In case of a list, names are assumed to be method names and
 #' each element corresponds to a numeric vector with names assumed to be
 #' dataset IDs.
 #' @param what Character.  Determines how the plot is customized.  One of
 #' \itemize{ \item runtime: displays runtime of methods across datasets, \item
 #' sig.sets: displays percentage of significant gene sets, \item rel.sets:
-#' displays phenotype relevance scores, \item: displays type I error rates.}
+#' displays phenotype relevance scores, \item typeI: displays type I error rates.}
 #' @return None. Plots to a graphics device.
 #' @author Ludwig Geistlinger <Ludwig.Geistlinger@@sph.cuny.edu>
 #' @seealso \code{\link{evalNrSigSets}} to evaluate fractions of significant 
@@ -36,12 +36,12 @@
 #'     data.ids <- paste0("d", 1:5)
 #' 
 #'     # runtime data
-#'     rt <- vapply(1:3, function(m) runif(5, min=m, max=m+1), numeric(5))
+#'     rt <- vapply(1:3, function(m) runif(5, min = m, max = m+1), numeric(5))
 #'     rownames(rt) <- data.ids 
 #'     colnames(rt) <- methods
 #' 
 #'     # plot
-#'     bpPlot(rt, what="runtime")
+#'     bpPlot(rt, what = "runtime")
 #' 
 #' @export bpPlot
 bpPlot <- function(data, what=c("runtime", "sig.sets", "rel.sets", "typeI")) 

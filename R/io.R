@@ -141,7 +141,7 @@ loadEData <- function(edata, nr.datasets=NULL, cache=TRUE, ...)
 #' @examples
 #' 
 #'      # load user-defined expression compendium
-#'      data.dir <- system.file("extdata/myEData", package="GSEABenchmarkeR")
+#'      data.dir <- system.file("extdata/myEData", package = "GSEABenchmarkeR")
 #'      edat <- loadEData(data.dir)
 #'
 #'      # do some processing of the compendium
@@ -151,7 +151,7 @@ loadEData <- function(edata, nr.datasets=NULL, cache=TRUE, ...)
 #'      cacheResource(edat, "myEData")
 #'
 #'      # ... and restore it at a later time
-#'      edat <- loadEData(data.dir, cache=TRUE)    
+#'      edat <- loadEData(data.dir, cache = TRUE)    
 #' 
 #' @export
 cacheResource <- function(res, rname, ucdir="GSEABenchmarkeR")

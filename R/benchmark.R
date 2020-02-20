@@ -244,7 +244,7 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
 #' 
 #' This function evaluates the proportion of rejected null hypotheses 
 #' (= the fraction of significant gene sets) of an enrichment method  
-#' when applied to random gene sets of defined size
+#' when applied to random gene sets of defined size.
 #' 
 #' 
 #' @param method Enrichment analysis method.  A character scalar chosen 
@@ -287,17 +287,17 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
 #' configuration of parallel computation.
 #' @examples
 #' 
-#'     # loading three datasets from the GEO2KEGG compendium
-#'     geo2kegg <- loadEData("geo2kegg", nr.datasets=3)
+#'     # loading two datasets from the GEO2KEGG compendium
+#'     geo2kegg <- loadEData("geo2kegg", nr.datasets = 2)
 #'
 #'     # only considering the first 1000 probes for demonstration
 #'     geo2kegg <- lapply(geo2kegg, function(d) d[1:1000,]) 
 #'
 #'     # preprocessing and DE analysis for two of the datasets
-#'     geo2kegg <- maPreproc(geo2kegg[2:3])
+#'     geo2kegg <- maPreproc(geo2kegg)
 #'     geo2kegg <- runDE(geo2kegg)
 #' 
-#'     evalRandomGS("camera", geo2kegg[[1]], reps=3)
+#'     evalRandomGS("camera", geo2kegg[[1]], reps = 3)
 #'     
 #' 
 #' @export evalRandomGS
@@ -377,7 +377,7 @@ evalRandomGS <- function(method, se, nr.gs=100, set.size=5,
 #' @param alpha Statistical significance level. Defaults to 0.05.
 #' @param padj Character.  Method for adjusting p-values to multiple testing.
 #' For available methods see the man page of the stats function
-#' \code{\link{p.adjust}}.  Defaults to \code{BH}.
+#' \code{\link{p.adjust}}.  Defaults to \code{"none"}.
 #' @return A list of numeric vectors storing for each method the number of
 #' (significant) gene sets for each dataset analyzed.  If each element of the
 #' resulting list is of equal length (corresponds to successful application of
@@ -395,15 +395,21 @@ evalRandomGS <- function(method, se, nr.gs=100, set.size=5,
 #'     data.ids <- paste0("d", 1:2)
 #' 
 #'     # simulate gene set rankings
-#'     ea.ranks <- sapply(methods, function(m) 
-#'             sapply(data.ids, 
-#'                 function(d)
-#'                 {
-#'                     r <- EnrichmentBrowser::makeExampleData("ea.res") 
-#'                     r <- EnrichmentBrowser::gsRanking(r, signif.only=FALSE)
-#'                     return(r)
-#'                 }, simplify=FALSE),
-#'                 simplify=FALSE)
+#'     getRankingForDataset <- function(d)
+#'     {
+#'          r <- EnrichmentBrowser::makeExampleData("ea.res") 
+#'          EnrichmentBrowser::gsRanking(r, signif.only=FALSE)
+#'     }
+#'   
+#'     getRankingsForMethod <- function(m)
+#'     {
+#'          rs <- lapply(data.ids, getRankingForDataset)
+#'          names(rs) <- data.ids
+#'          rs
+#'     }
+#'         
+#'     ea.ranks <- lapply(methods, getRankingsForMethod) 
+#'     names(ea.ranks) <- methods 
 #' 
 #'     # evaluate
 #'     evalNrSets(ea.ranks)
@@ -498,7 +504,7 @@ evalNrSets <- function(ea.ranks, uniq.pval=TRUE, perc=TRUE)
 #'
 #' @param ea.ranks Enrichment analysis rankings.  A list with an entry for each
 #' enrichment method applied.  Each entry is a list that stores for each
-#' dataset analyzed the resulting gene set ranking obtained from applying the
+#' dataset analyzed the resulting gene set ranking, obtained from applying the
 #' respective method to the respective dataset.  Resulting gene set rankings
 #' are assumed to be of class \code{\linkS4class{DataFrame}} in which gene sets
 #' (required column named \code{GENE.SET}) are ranked according to a ranking

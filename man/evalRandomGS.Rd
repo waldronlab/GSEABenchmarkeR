@@ -71,21 +71,21 @@ the proportion of significant gene sets for each replication itself
 \description{
 This function evaluates the proportion of rejected null hypotheses 
 (= the fraction of significant gene sets) of an enrichment method  
-when applied to random gene sets of defined size
+when applied to random gene sets of defined size.
 }
 \examples{
 
-    # loading three datasets from the GEO2KEGG compendium
-    geo2kegg <- loadEData("geo2kegg", nr.datasets=3)
+    # loading two datasets from the GEO2KEGG compendium
+    geo2kegg <- loadEData("geo2kegg", nr.datasets = 2)
 
     # only considering the first 1000 probes for demonstration
     geo2kegg <- lapply(geo2kegg, function(d) d[1:1000,]) 
 
     # preprocessing and DE analysis for two of the datasets
-    geo2kegg <- maPreproc(geo2kegg[2:3])
+    geo2kegg <- maPreproc(geo2kegg)
     geo2kegg <- runDE(geo2kegg)
 
-    evalRandomGS("camera", geo2kegg[[1]], reps=3)
+    evalRandomGS("camera", geo2kegg[[1]], reps = 3)
     
 
 }

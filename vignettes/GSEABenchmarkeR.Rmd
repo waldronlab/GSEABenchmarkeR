@@ -42,15 +42,14 @@ of choice are recommended to use the `r Biocpkg("EnrichmentBrowser")` package in
 In other words,
 
 - if you are interested in analysing a particular microarray or RNA-seq dataset,
-e.g. a case-control study where you want to find out which GO terms / KEGG pathways 
-are enriched for differentially expressed genes, i.e. your primary goal is 
-_biological interpretation of a specific dataset under investigation_, then use 
-the `r Biocpkg("EnrichmentBrowser")` package.
+e.g. a case-control study where you want to find out which GO terms / KEGG pathways
+are enriched for differentially expressed genes, i.e. your primary goal is _biological
+interpretation of a specific dataset under investigation_, then use the
+`r Biocpkg("EnrichmentBrowser")` package.
 
 - if you want to assess the performance (runtime, type I error rate, etc) of 
 different enrichment methods across many datasets and in certain simulated setups - 
-i.e. your primary goal is to 
-_understand methodological aspects and compare methods against each other_,
+i.e. your primary goal is to _understand methodological aspects and compare methods against each other_,
 then use the `r Biocpkg("GSEABenchmarkeR")` package.
 
 
@@ -348,6 +347,29 @@ This makes results, potentially obtained from time-consuming computations,
 persistent across _R_ sessions. 
 In case of unexpected errors, this also allows resumption from the point of failure.
 
+## User-defined enrichment methods
+
+User-defined enrichment methods can easily be plugged into the benchmarking framework. 
+For demonstration, we define a dummy enrichment method that randomly draws _p_-values 
+from a uniform distribution.
+
+```{r}
+method <- function(se, gs)
+{
+	ps <- runif(length(gs))
+	names(ps) <- names(gs)
+	return(ps)
+}
+```
+
+We then execute this method on two datasets of the GEO2KEGG compendium using `runEA`
+as before.
+
+```{r}
+res <- runEA(geo2kegg[1:2], method, kegg.gs)
+res
+```
+
 # Benchmarking
 
 Once methods have been applied to a chosen benchmark compendium, they can be 
@@ -589,6 +611,30 @@ all.kegg.res <- evalRelevance(ea.ranks, mala.kegg, d2d.map[names(geo2kegg)])
 bpPlot(all.kegg.res, what="rel.sets")
 ```
 
+### User-defined relevance rankings
+
+It is also possible to refine the integrated MalaCards relevance rankings or to 
+incorporate relevance rankings for additional datasets.
+
+For demonstration, we modify the KEGG relevance ranking for Alzheimer's disease
+by providing a random relevance score for each gene set.
+
+```{r}
+rel.ranks <- mala.kegg$ALZ[,1:2]
+rel.ranks$REL.SCORE <- runif(nrow(rel.ranks), min=1, max=100)
+rel.ranks$REL.SCORE <- round(rel.ranks$REL.SCORE, digits = 2)
+ind <- order(rel.ranks$REL.SCORE, decreasing = TRUE)
+rel.ranks <- rel.ranks[ind,]
+rel.ranks
+```
+
+We can then compute the aggregated relevance score of the ORA ranking according
+to the updated relevance ranking using `evalRelevance` as before.
+
+```{r}
+evalRelevance(ea.ranks$ora$GSE1297, rel.ranks)
+``` 
+
 # Advanced 
 
 ## Caching
@@ -669,5 +715,3 @@ geo2kegg <- runDE(geo2kegg, parallel=bp.par)
 Users that would like to use distributed computation, on e.g. an institutional 
 computer cluster, should consult the vignette of the `r Biocpkg("BiocParallel")`
 package to similarly configure a `BiocParallelParam` for that purpose.
-
-## Benchmarking user-defined methods, 

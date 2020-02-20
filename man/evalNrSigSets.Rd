@@ -19,7 +19,7 @@ the respective method to the respective dataset.}
 
 \item{padj}{Character.  Method for adjusting p-values to multiple testing.
 For available methods see the man page of the stats function
-\code{\link{p.adjust}}.  Defaults to \code{BH}.}
+\code{\link{p.adjust}}.  Defaults to \code{"none"}.}
 
 \item{perc}{Logical.  Should the percentage or absolute number of gene sets
 be returned?  Percentage is typically more useful for comparison between
@@ -52,15 +52,21 @@ threshold?).
     data.ids <- paste0("d", 1:2)
 
     # simulate gene set rankings
-    ea.ranks <- sapply(methods, function(m) 
-            sapply(data.ids, 
-                function(d)
-                {
-                    r <- EnrichmentBrowser::makeExampleData("ea.res") 
-                    r <- EnrichmentBrowser::gsRanking(r, signif.only=FALSE)
-                    return(r)
-                }, simplify=FALSE),
-                simplify=FALSE)
+    getRankingForDataset <- function(d)
+    {
+         r <- EnrichmentBrowser::makeExampleData("ea.res") 
+         EnrichmentBrowser::gsRanking(r, signif.only=FALSE)
+    }
+  
+    getRankingsForMethod <- function(m)
+    {
+         rs <- lapply(data.ids, getRankingForDataset)
+         names(rs) <- data.ids
+         rs
+    }
+        
+    ea.ranks <- lapply(methods, getRankingsForMethod) 
+    names(ea.ranks) <- methods 
 
     # evaluate
     evalNrSets(ea.ranks)
