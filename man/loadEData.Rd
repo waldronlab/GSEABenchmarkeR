@@ -34,7 +34,13 @@ indicating where processed RDS files for each dataset are written to.
 Defaults to NULL, which will then write to
 \code{rappdirs::user_data_dir("GSEABenchmarkeR")}.  \item min.ctrls:
 integer. Minimum number of controls, i.e. adjacent normal samples, for a
-cancer type to be included. Defaults to 9.  \item min.cpm: integer. Minimum
+cancer type to be included. Defaults to 9. 
+\item paired: Logical. Should the pairing of samples (tumor and adjacent
+normal) be taken into account? Defaults to \code{TRUE}, which reduces the
+data for each cancer type to patients for which both sample types 
+(tumor and adjacent normal) are available. Use \code{FALSE} to obtain all 
+samples in an unpaired manner. 
+\item min.cpm: integer. Minimum
 counts-per-million reads mapped.  See the edgeR vignette for details. The
 default filter is to exclude genes with cpm < 2 in more than half of the
 samples.  \item with.clin.vars: logical. Should clinical variables (>500) be
