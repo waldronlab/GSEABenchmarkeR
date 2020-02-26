@@ -29,7 +29,7 @@
         # using a cached version ignores all other arguments
         # such as nr.datasets, de.only, ... 
         el <- .getResourceFromCache(rname="geo2kegg", update.value=NA)
-        if(!is.null(el)) return(el)
+        if(!is.null(el)) return(el[intersect(data.ids, names(el))])
     }       
 
     # if not, create from package
@@ -146,35 +146,30 @@ maPreproc <- function(exp.list, parallel=NULL)
 #
 # get GEO IDs of geo2kegg benchmark compendium
 # 
-.getGeo2KeggIds <- function(de.only=FALSE, excl.metac=FALSE)
+.getGeo2KeggIds <- function(de.only = FALSE, excl.metac = FALSE)
 {
-    geoIds1 <- data(package="KEGGdzPathwaysGEO")$results[,"Item"]
-    geoIds2 <- data(package="KEGGandMetacoreDzPathwaysGEO")$results[,"Item"]
-    geoIds <- c(geoIds1, geoIds2)
+    geo.ids1 <- data(package="KEGGdzPathwaysGEO")$results[,"Item"]
+    geo.ids2 <- data(package="KEGGandMetacoreDzPathwaysGEO")$results[,"Item"]
+    geo.ids <- c(geo.ids1, geo.ids2)
 
     # metacore geo ids    
     if(excl.metac)
     {
-        tgs <- function(d) notes(experimentData(d))$targetGeneSets
-        g2k <- .iter(tgs, geoIds)
-
-        metacTgs <- g2k[!grepl("^[0-9]+$", g2k)]
-        metacGeoIds <- names(metacTgs) 
-        geoIds <- geoIds[-match(metacGeoIds, geoIds)]
+        metac <- c("11906", "19420", "20164", "22780", "30153", 
+                    "38666_epithelia", "38666_stroma", "42057")
+        metac <- paste0("GSE", metac)
+        geo.ids <- setdiff(geo.ids, metac)
     }
 
     # de geo ids
     if(de.only)
     {
-        #de <- iter.geos(fract.de, geo.ids=geo.ids, alpha=0.05, beta=1)
-        #de <- t(de)
-        #non.de.geos <- rownames(de)[de[,1]==0 | de[,2]==0] 
-        nonDeGeos <- paste0("GSE", c("20153", "20291", 
-            "6956AA", "6956C", "781", "8762", "16759",
-            "19420", "20164", "22780", "30153", "42057"))
-        geoIds <- geoIds[!(geoIds %in% nonDeGeos)]
+        no.de <- c("20153", "20291", "6956AA", "6956C", "781", "8762", 
+                    "16759", "19420", "20164", "22780", "30153", "42057")
+        no.de <- paste0("GSE", no.de)
+        geo.ids <- setdiff(geo.ids, no.de)
     }
 
-    return(geoIds)
+    return(geo.ids)
 }
 

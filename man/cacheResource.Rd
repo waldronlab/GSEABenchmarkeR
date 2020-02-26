@@ -24,7 +24,7 @@ expression data compendium via caching.
 \examples{
 
      # load user-defined expression compendium
-     data.dir <- system.file("extdata/myEData", package="GSEABenchmarkeR")
+     data.dir <- system.file("extdata/myEData", package = "GSEABenchmarkeR")
      edat <- loadEData(data.dir)
 
      # do some processing of the compendium
@@ -34,7 +34,7 @@ expression data compendium via caching.
      cacheResource(edat, "myEData")
 
      # ... and restore it at a later time
-     edat <- loadEData(data.dir, cache=TRUE)    
+     edat <- loadEData(data.dir, cache = TRUE)    
 
 }
 \seealso{

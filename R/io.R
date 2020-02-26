@@ -40,16 +40,30 @@
 #' Defaults to NULL, which will then write to
 #' \code{rappdirs::user_data_dir("GSEABenchmarkeR")}.  \item min.ctrls:
 #' integer. Minimum number of controls, i.e. adjacent normal samples, for a
-#' cancer type to be included. Defaults to 9.  \item min.cpm: integer. Minimum
+#' cancer type to be included. Defaults to 9. 
+#' \item paired: Logical. Should the pairing of samples (tumor and adjacent
+#' normal) be taken into account? Defaults to \code{TRUE}, which reduces the
+#' data for each cancer type to patients for which both sample types 
+#' (tumor and adjacent normal) are available. Use \code{FALSE} to obtain all 
+#' samples in an unpaired manner. 
+#' \item min.cpm: integer. Minimum
 #' counts-per-million reads mapped.  See the edgeR vignette for details. The
 #' default filter is to exclude genes with cpm < 2 in more than half of the
 #' samples.  \item with.clin.vars: logical. Should clinical variables (>500) be
 #' kept to allow for more advanced sample groupings in addition to the default
 #' binary grouping (tumor vs. normal)?  }
 #' @return A \code{list} of datasets, typically of class
-#' \code{\linkS4class{SummarizedExperiment}}.
+#' \code{\linkS4class{SummarizedExperiment}}. 
+#'
+#' Note that \code{loadEData("geo2kegg", preproc = FALSE)} (the default) 
+#' returns the original microarray probe level data as a list of 
+#' \code{\linkS4class{ExpressionSet}} objects. Use \code{preproc = TRUE} or
+#' the \code{\link{maPreproc}} function to summarize the probe level
+#' data to gene level data and to obtain a \code{list} of 
+#' \code{\linkS4class{SummarizedExperiment}} objects.
 #' @author Ludwig Geistlinger <Ludwig.Geistlinger@@sph.cuny.edu>
-#' @seealso \code{\linkS4class{SummarizedExperiment}}
+#' @seealso \code{\linkS4class{SummarizedExperiment}}, 
+#' \code{\linkS4class{ExpressionSet}}, \code{\link{maPreproc}}
 #' @references Tarca et al. (2012) Down-weighting overlapping genes improves
 #' gene set analysis.  BMC Bioinformatics, 13:136.
 #' 
@@ -77,12 +91,13 @@
 #' @export loadEData
 loadEData <- function(edata, nr.datasets=NULL, cache=TRUE, ...)
 {
-    if(edata=="geo2kegg") data.ids <- .loadGEO2KEGG(nr.datasets, cache, ...)
-    else if(edata=="tcga") data.ids <- .loadTCGA(nr.datasets, cache, ...)
+    stopifnot(is.character(edata))
+    if(edata == "geo2kegg") exp.list <- .loadGEO2KEGG(nr.datasets, cache, ...)
+    else if(edata == "tcga") exp.list <- .loadTCGA(nr.datasets, cache, ...)
     else if(file.exists(edata)) 
-        data.ids <- .loadEDataFromFile(edata, nr.datasets, cache)
+        exp.list <- .loadEDataFromFile(edata, nr.datasets, cache)
     else stop("edata must be \'geo2kegg\', \'tcga\' or an absolute file path")
-    return(data.ids)
+    return(exp.list)
 }
 
 #
@@ -91,14 +106,18 @@ loadEData <- function(edata, nr.datasets=NULL, cache=TRUE, ...)
 .loadEDataFromFile <- function(edata, nr.datasets=NULL, cache=TRUE)
 {
     data.ids <- sub(".rds$", "", list.files(edata, pattern="*.rds$"))
-    if(!is.null(nr.datasets)) data.ids <- data.ids[seq_len(nr.datasets)]
+    if(!is.null(nr.datasets)) 
+    {
+        nr.datasets <- min(nr.datasets, length(data.ids))
+        data.ids <- data.ids[seq_len(nr.datasets)]
+    }
 
     # should a cached version be used?
     if(cache)
     {  
         eid <- basename(edata)
         exp.list <- .getResourceFromCache(rname=eid, update.value=NA)
-        if(!is.null(exp.list)) return(exp.list)
+        if(!is.null(exp.list)) return(exp.list[intersect(data.ids, names(exp.list))])
     }
          
     if(interactive())
@@ -133,7 +152,7 @@ loadEData <- function(edata, nr.datasets=NULL, cache=TRUE, ...)
 #' @examples
 #' 
 #'      # load user-defined expression compendium
-#'      data.dir <- system.file("extdata/myEData", package="GSEABenchmarkeR")
+#'      data.dir <- system.file("extdata/myEData", package = "GSEABenchmarkeR")
 #'      edat <- loadEData(data.dir)
 #'
 #'      # do some processing of the compendium
@@ -143,7 +162,7 @@ loadEData <- function(edata, nr.datasets=NULL, cache=TRUE, ...)
 #'      cacheResource(edat, "myEData")
 #'
 #'      # ... and restore it at a later time
-#'      edat <- loadEData(data.dir, cache=TRUE)    
+#'      edat <- loadEData(data.dir, cache = TRUE)    
 #' 
 #' @export
 cacheResource <- function(res, rname, ucdir="GSEABenchmarkeR")

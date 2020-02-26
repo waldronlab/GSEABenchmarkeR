@@ -34,7 +34,13 @@ indicating where processed RDS files for each dataset are written to.
 Defaults to NULL, which will then write to
 \code{rappdirs::user_data_dir("GSEABenchmarkeR")}.  \item min.ctrls:
 integer. Minimum number of controls, i.e. adjacent normal samples, for a
-cancer type to be included. Defaults to 9.  \item min.cpm: integer. Minimum
+cancer type to be included. Defaults to 9. 
+\item paired: Logical. Should the pairing of samples (tumor and adjacent
+normal) be taken into account? Defaults to \code{TRUE}, which reduces the
+data for each cancer type to patients for which both sample types 
+(tumor and adjacent normal) are available. Use \code{FALSE} to obtain all 
+samples in an unpaired manner. 
+\item min.cpm: integer. Minimum
 counts-per-million reads mapped.  See the edgeR vignette for details. The
 default filter is to exclude genes with cpm < 2 in more than half of the
 samples.  \item with.clin.vars: logical. Should clinical variables (>500) be
@@ -43,7 +49,14 @@ binary grouping (tumor vs. normal)?  }}
 }
 \value{
 A \code{list} of datasets, typically of class
-\code{\linkS4class{SummarizedExperiment}}.
+\code{\linkS4class{SummarizedExperiment}}. 
+
+Note that \code{loadEData("geo2kegg", preproc = FALSE)} (the default) 
+returns the original microarray probe level data as a list of 
+\code{\linkS4class{ExpressionSet}} objects. Use \code{preproc = TRUE} or
+the \code{\link{maPreproc}} function to summarize the probe level
+data to gene level data and to obtain a \code{list} of 
+\code{\linkS4class{SummarizedExperiment}} objects.
 }
 \description{
 This function implements a general interface for loading the pre-defined
@@ -91,7 +104,8 @@ Cancer Genome Atlas leads to improved analysis results.  Bioinformatics,
 31(22):3666-72.
 }
 \seealso{
-\code{\linkS4class{SummarizedExperiment}}
+\code{\linkS4class{SummarizedExperiment}}, 
+\code{\linkS4class{ExpressionSet}}, \code{\link{maPreproc}}
 }
 \author{
 Ludwig Geistlinger <Ludwig.Geistlinger@sph.cuny.edu>

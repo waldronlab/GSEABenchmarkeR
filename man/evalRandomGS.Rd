@@ -4,9 +4,21 @@
 \alias{evalRandomGS}
 \title{Evaluation of enrichment methods on random gene sets}
 \usage{
-evalRandomGS(method, se, nr.gs = 100, set.size = 5, alpha = 0.05,
-  padj = "none", perc = TRUE, reps = 100, rep.block.size = -1,
-  summarize = TRUE, save2file = FALSE, out.dir = NULL, ...)
+evalRandomGS(
+  method,
+  se,
+  nr.gs = 100,
+  set.size = 5,
+  alpha = 0.05,
+  padj = "none",
+  perc = TRUE,
+  reps = 100,
+  rep.block.size = -1,
+  summarize = TRUE,
+  save2file = FALSE,
+  out.dir = NULL,
+  ...
+)
 }
 \arguments{
 \item{method}{Enrichment analysis method.  A character scalar chosen 

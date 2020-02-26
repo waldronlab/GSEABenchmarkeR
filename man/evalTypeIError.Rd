@@ -4,9 +4,20 @@
 \alias{evalTypeIError}
 \title{Evaluation of the type I error rate of enrichment methods}
 \usage{
-evalTypeIError(methods, exp.list, gs, alpha = 0.05, ea.perm = 1000,
-  tI.perm = 1000, perm.block.size = -1, summarize = TRUE,
-  save2file = FALSE, out.dir = NULL, verbose = TRUE, ...)
+evalTypeIError(
+  methods,
+  exp.list,
+  gs,
+  alpha = 0.05,
+  ea.perm = 1000,
+  tI.perm = 1000,
+  perm.block.size = -1,
+  summarize = TRUE,
+  save2file = FALSE,
+  out.dir = NULL,
+  verbose = TRUE,
+  ...
+)
 }
 \arguments{
 \item{methods}{Methods for enrichment analysis.  A character vector with

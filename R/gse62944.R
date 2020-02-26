@@ -20,7 +20,7 @@
     {  
         # ignore all other arguments 
         el <- .getResourceFromCache(rname="tcga", update.value=NA)
-        if(!is.null(el)) return(el)
+        if(!is.null(el)) return(el[seq_len(min(nr.datasets, length(el)))])
     }      
  
     # otherwise download it
@@ -32,7 +32,6 @@
         nr.datasets, min.ctrls=min.ctrls, min.cpm=min.cpm, paired=paired)
     
     if(interactive()) cacheResource(el, "tcga")
-     
     return(el)
 }
 
@@ -61,8 +60,7 @@
     suppressMessages( norm <- gse[["EH1044"]] )
     names(assays(norm)) <- names(assays(tum)) <- "exprs" 
     
-    res <- list(tum=tum, norm=norm)
-    return(res)
+    list(tum = tum, norm = norm)
 }
 
 #
@@ -74,71 +72,68 @@
     if(is.null(data.dir))
         data.dir <- rappdirs::user_data_dir("GSEABenchmarkeR")
 
-    message("Downloading GSE62944 from GEO ...")
-    EnrichmentBrowser::isAvailable("GEOquery", type="software")
-    GEOquery::getGEOSuppFiles("GSE62944", baseDir=data.dir)
     data.dir <- file.path(data.dir, "GSE62944")
-    message(paste("Data files are stored under:", data.dir))
-
-    # feature counts
     tum.file <- "GSM1536837_06_01_15_TCGA_24.tumor_Rsubread_FeatureCounts.txt.gz"
     norm.file <- "GSM1697009_06_01_15_TCGA_24.normal_Rsubread_FeatureCounts.txt.gz"
-   
-    tar.file <- file.path(data.dir, "GSE62944_RAW.tar") 
-    untar(tar.file, c(norm.file,  tum.file), exdir=data.dir)
+    tum.cl.file <- "GSE62944_06_01_15_TCGA_24_CancerType_Samples.txt.gz"
+    norm.cl.file <- "GSE62944_06_01_15_TCGA_24_Normal_CancerType_Samples.txt.gz"
+    clin.var.file <- "GSE62944_06_01_15_TCGA_24_548_Clinical_Variables_9264_Samples.txt.gz"
     
+    rel.files <- c(tum.file, norm.file, tum.cl.file, norm.cl.file, clin.var.file)
+    rel.files <- file.path(data.dir, rel.files)
+
+    if(!all(file.exists(rel.files)))
+    {
+        message("Downloading GSE62944 from GEO ...")
+        EnrichmentBrowser::isAvailable("GEOquery", type = "software")
+        GEOquery::getGEOSuppFiles("GSE62944", baseDir = dirname(data.dir))
+        message(paste("Data files are stored under:", data.dir))
+        tar.file <- file.path(data.dir, "GSE62944_RAW.tar") 
+        untar(tar.file, basename(rel.files[1:2]), exdir = data.dir)
+    }
+
     message("Reading feature counts ...")
-    norm.file <- file.path(data.dir, norm.file)
-    norm.cont <- read.delim(norm.file, row.names=1L, as.is=TRUE)
-    tum.file <- file.path(data.dir, tum.file)
-    tum.cont <- read.delim(tum.file, row.names=1L)
-   
+    tum.cont <- read.delim(rel.files[1], row.names=1L, as.is=TRUE)
+    norm.cont <- read.delim(rel.files[2], row.names=1L, as.is=TRUE)
     colnames(norm.cont) <- gsub("\\.", "-", colnames(norm.cont))
     colnames(tum.cont) <- gsub("\\.", "-", colnames(tum.cont))
 
     # cancer types
     message("Reading sample annotation (cancer/normal) ...")
-    tum.cl.file <- "GSE62944_06_01_15_TCGA_24_CancerType_Samples.txt.gz"
-    tum.cl.file <- file.path(data.dir, tum.cl.file)
-    norm.cl.file <- "GSE62944_06_01_15_TCGA_24_Normal_CancerType_Samples.txt.gz"
-    norm.cl.file <- file.path(data.dir, norm.cl.file)
-    tum.cl <- read.delim(tum.cl.file, header=FALSE, as.is=TRUE)
-    norm.cl <- read.delim(norm.cl.file, header=FALSE, as.is=TRUE)
+    tum.cl <- read.delim(rel.files[3], header=FALSE, as.is=TRUE)
+    norm.cl <- read.delim(rel.files[4], header=FALSE, as.is=TRUE)
     colnames(tum.cl) <- colnames(norm.cl) <- c("sample", "type")
 
     # clinical variables
     if(with.clin.vars)
     {
-        clin.var.file <- "GSE62944_06_01_15_TCGA_24_548_Clinical_Variables_9264_Samples.txt.gz"
-        clin.var.file <- file.path(data.dir, clin.var.file)
-        clin.var <- read.delim(clin.var.file, as.is=TRUE) 
+        clin.var <- read.delim(rel.files[5], as.is=TRUE) 
         n <- clin.var[,1] 
         clin.var <- clin.var[,-c(1,2,3)]
         colnames(clin.var) <- gsub("\\.", "-", colnames(clin.var))
         clin.var <- t(clin.var)
         colnames(clin.var) <- n
-        tum.cl <- cbind(clin.var, tum.cl[,"type"])
-        colnames(tum.cl)[ncol(tum.cl)] <- "type" 
+        tum.cl <- cbind(tum.cl, clin.var)
     }
 
     # clean up
     message("Cleaning up ...")
-    rel.files <- c(tum.file, tum.cl.file, norm.file, norm.cl.file)
-    if(with.clin.vars) rel.files <- c(rel.files, clin.var.file)
     rm.files <- list.files(data.dir, full.names=TRUE) 
     rm.files <- rm.files[!(rm.files %in% rel.files)]
     file.remove(rm.files)
 
     # create SummarizedExperiment for tumor and normal 
     message("Creating a SummarizedExperiment for tumor and normal samples ...")
-    tum <- SummarizedExperiment(assays=list(exprs=as.matrix(tum.cont)))
-    colData(tum) <- DataFrame(tum.cl)    
+    
+    tum.cont <- tum.cont[tum.cl$sample]
+    tum <- SummarizedExperiment(assays = list(exprs = as.matrix(tum.cont)),
+                                colData = DataFrame(tum.cl))    
  
-    norm <- SummarizedExperiment(assays=list(exprs=as.matrix(norm.cont)))
-    colData(norm) <- DataFrame(norm.cl)    
+    norm.cont <- norm.cont[norm.cl$sample]
+    norm <- SummarizedExperiment(assays = list(exprs = as.matrix(norm.cont)),
+                                 colData = DataFrame(norm.cl))
 
-    res <- list(tum=tum, norm=norm)
-    return(res)
+    list(tum = tum, norm = norm)
 }
 
 .splitByCancerType <- function(tum, norm, 
@@ -170,9 +165,19 @@
         nr.datasets <- min(nr.datasets, length(rel.cts)) 
         rel.cts <- rel.cts[seq_len(nr.datasets)] 
     }
+
     message("Cancer types with sufficient tumor and adj. normal samples:")
     message(paste(rel.cts, collapse=", "))
     message("Creating a SummarizedExperiment for each of them ...")
+
+    diff.cols <- setdiff(colnames(colData(tum)), colnames(colData(norm)))
+    if(length(diff.cols))
+    {
+        mat <- matrix(NA, nrow = ncol(norm), ncol = length(diff.cols))
+        colnames(mat) <- diff.cols
+        colData(norm) <- cbind(colData(norm), DataFrame(mat))
+        colData(norm) <- colData(norm)[,colnames(colData(tum))]
+    }
 
     exp.list <- lapply(rel.cts,
         function(ct) 
@@ -205,10 +210,10 @@
             # rm genes with all 0 and less than min.reads
             rs <- rowSums(edgeR::cpm(assay(se)) > min.cpm)
             keep <-  rs >= ncol(se) / 2
-            se <- se[keep,]
-   
-            return(se)
+            se[keep,]
         })
     names(exp.list) <- rel.cts
-    return(exp.list)
+    
+    nr.samples <- vapply(exp.list, ncol, integer(1)) 
+    exp.list[nr.samples >= min.ctrls * 2]
 }
