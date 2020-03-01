@@ -21,31 +21,35 @@ Defaults to \code{TRUE}.}
 
 \item{...}{Additional arguments passed to the internal loading routines of
 the GEO2KEGG and TCGA compendia.  This currently includes for loading of the
-GEO2KEGG compendium \itemize{ \item preproc: logical. Should probe level
-data automatically be summarized to gene level data? Defaults to FALSE.
-\item de.only: logical. Include only datasets in which differentially
-expressed genes have been found? Defaults to FALSE.  \item excl.metac:
+GEO2KEGG compendium \itemize{ \item \code{preproc}: logical. Should probe level
+data automatically be summarized to gene level data? Defaults to \code{FALSE}.
+\item \code{de.only}: logical. Include only datasets in which differentially
+expressed genes have been found? Defaults to \code{FALSE}. \item \code{excl.metac}:
 logical. Exclude datasets for which MetaCore rather than KEGG pathways have
-been assigned as target pathways?  Defaults to FALSE.  } And for loading of
-the TCGA compendium \itemize{ \item mode: character, determines how GSE62944
-is obtained. Either 'ehub' (default, via ExperimentHub) or 'geo' (direct
-download from GEO, slow).  \item data.dir: character. Absolute file path
+been assigned as target pathways?  Defaults to \code{FALSE}.  } And for loading of
+the TCGA compendium \itemize{ \item \code{mode}: character, determines how TCGA 
+RNA-seq datasets are obtained. To obtain raw read counts from GSE62944 use 
+either \code{'ehub'} (default, via ExperimentHub) or \code{'geo'} (direct
+download from GEO, slow). Alternatively, use \code{'cTD'} to obtain normalized 
+log2 TPM values from curatedTCGAData.  
+\item \code{data.dir}: character. Absolute file path
 indicating where processed RDS files for each dataset are written to.
-Defaults to NULL, which will then write to
-\code{rappdirs::user_data_dir("GSEABenchmarkeR")}.  \item min.ctrls:
-integer. Minimum number of controls, i.e. adjacent normal samples, for a
-cancer type to be included. Defaults to 9. 
-\item paired: Logical. Should the pairing of samples (tumor and adjacent
+Defaults to \code{NULL}, which will then write to
+\code{rappdirs::user_data_dir("GSEABenchmarkeR")}.
+\item \code{min.ctrls}: integer. Minimum number of controls, i.e. adjacent
+normal samples, for a cancer type to be included. Defaults to 9. 
+\item \code{paired}: Logical. Should the pairing of samples (tumor and adjacent
 normal) be taken into account? Defaults to \code{TRUE}, which reduces the
 data for each cancer type to patients for which both sample types 
 (tumor and adjacent normal) are available. Use \code{FALSE} to obtain all 
 samples in an unpaired manner. 
-\item min.cpm: integer. Minimum
+\item \code{min.cpm}: integer. Minimum
 counts-per-million reads mapped.  See the edgeR vignette for details. The
 default filter is to exclude genes with cpm < 2 in more than half of the
-samples.  \item with.clin.vars: logical. Should clinical variables (>500) be
+samples.  \item \code{with.clin.vars}: logical. Should clinical variables (>500) be
 kept to allow for more advanced sample groupings in addition to the default
-binary grouping (tumor vs. normal)?  }}
+binary grouping (tumor vs. normal)? \item \code{map2entrez}: Should human gene symbols
+be automatically mapped to Entrez Gene IDs? Defaults to \code{TRUE}.}}
 }
 \value{
 A \code{list} of datasets, typically of class

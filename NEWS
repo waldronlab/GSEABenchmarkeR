@@ -1,19 +1,30 @@
+CHANGES IN VERSION 1.8.0
+-------------------------
+
+    o Extended support for benchmarking user-defined inputs:
+      - mixing of pre-defined and user-defined enrichment methods
+        (functions `runEA` and `evalTypeIError`)
+      - simplified of additional arguments
+    o The TCGA RNA-seq compendium can now also be obtained via curatedTCGAData
+      using `loadEData("tcga", mode = "cTD")`
+        
+
 CHANGES IN VERSION 1.6.0
 -------------------------
 
-    o New function `evalTypeIError` for type I error rate evalution by sample permutation:
-      - evaluation of one or more enrichment methods on one or more expression datasets
-      - support for splitting permutations into blocks of defined size, and invoking 
+    o New function `evalTypeIError`: type I error evalution by sample permutation
+      - evaluation of >= 1 enrichment methods on >= 1 expression datasets
+      - support for splitting permutations into blocks of defined size + invoking 
         parallel evaluation of the partitions 
     o New function `evalRandomGS` for evaluation of random gene sets:
       - estimates proportion of rejected null hypotheses (= fraction of significant 
         gene sets) of an enrichment method when applied to random gene sets of defined size
-      - evaluation of one or more enrichment methods on an expression dataset of choice
+      - evaluation of >= 1 enrichment methods on an expression dataset of choice
     o New argument `method` to the `evalRelevance` function for the evaluation
       of phenotype relevance of gene set rankings, choices include:
       - "wsum": computes a weighted sum of the relevance scores (default),
       - "auc": performs a ROC/AUC analysis based on the ROCR package,
-      - "cor": computes a standard correlation measure such as Spearman's rank correlation,
+      - "cor": computes a standard correlation such as Spearman's rank correlation,
       - a user-defined function for customized behaviors.
     o New function `metaFC` for summarizing fold changes of individual datasets 
       across a compendium of expression datasets
