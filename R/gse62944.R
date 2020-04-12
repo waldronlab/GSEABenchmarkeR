@@ -97,8 +97,9 @@
     if(!all(file.exists(rel.files)))
     {
         message("Downloading GSE62944 from GEO ...")
+        getGEOSuppFiles <- NULL
         EnrichmentBrowser::isAvailable("GEOquery", type = "software")
-        GEOquery::getGEOSuppFiles("GSE62944", baseDir = dirname(data.dir))
+        getGEOSuppFiles("GSE62944", baseDir = dirname(data.dir))
         message(paste("Data files are stored under:", data.dir))
         tar.file <- file.path(data.dir, "GSE62944_RAW.tar") 
         untar(tar.file, basename(rel.files[1:2]), exdir = data.dir)
@@ -167,21 +168,33 @@
     .first <- function(n) unlist(strsplit(n, "_"))[1]    
     names(exp.list) <- vapply(names(exp.list), .first, character(1))
 
+    message("Cancer types with tumor samples:")
+    message(paste(names(exp.list), collapse=", "))
+
     # extract samples types (01 = tumor, 11 = adj. normal)
     stypes <- lapply(exp.list, .getSampleType) 
     stab <- lapply(stypes, table)
+
+    .hasAControl <- function(x) "11" %in% names(x)
+    ind <- vapply(stab, .hasAControl, logical(1))
+    message("Cancer types with adj. normal samples:")
+    message(paste(names(exp.list[ind]), collapse=", "))
 
     # has sufficient controls?
     .hasControls <- function(x) 
         all(c("01", "11") %in% names(x)) && x["11"] >= min.ctrls
     ind <- vapply(stab, .hasControls, logical(1))
     exp.list <- exp.list[ind]
-
+    
     # specified number of datsets?
     if(!is.null(nr.datasets)) 
         exp.list <- exp.list[seq_len(min(nr.datasets, length(exp.list)))]
 
-    exp.list <- lapply(exp.list, .groupSE)
+    message("Cancer types with sufficient tumor and adj. normal samples:")
+    message(paste(names(exp.list), collapse=", "))
+    message("Creating a SummarizedExperiment for each of them ...")
+    
+    exp.list <- lapply(exp.list, .groupSE, report = !paired)
     for(i in seq_along(exp.list)) 
         metadata(exp.list[[i]])$dataId <- names(exp.list)[i]   
     
@@ -225,7 +238,7 @@
 
 .getSampleType <- function(se) substring(colnames(se), 14, 15)
 
-.groupSE <- function(se)
+.groupSE <- function(se, report = TRUE)
 {
     GRP.COL <- EnrichmentBrowser::configEBrowser("GRP.COL")
     stypes <- .getSampleType(se)
@@ -234,6 +247,12 @@
     stypes <- stypes[ind]
     se[[GRP.COL]] <- ifelse(stypes == "01", 1, 0) 
     metadata(se)$dataType <- "rseq"
+    
+    if(report) 
+        message(metadata(se)$dataId, 
+                " tumor: ", sum(se[[GRP.COL]] == 1), 
+                " adj.normal: ", sum(se[[GRP.COL]] == 0))
+
     return(se)
 }
 
@@ -249,6 +268,10 @@
     ind <- patient.ids %in% isect
     se <- se[,ind]
     se[[BLK.COL]] <- patient.ids[ind] 
+
+    message(metadata(se)$dataId, 
+            " tumor: ", sum(se[[GRP.COL]] == 1), 
+            " adj.normal: ", sum(se[[GRP.COL]] == 0))
     return(se)
 }
 

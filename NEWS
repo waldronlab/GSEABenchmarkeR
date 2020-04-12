@@ -4,7 +4,8 @@ CHANGES IN VERSION 1.8.0
     o Extended support for benchmarking user-defined inputs:
       - mixing of pre-defined and user-defined enrichment methods
         (functions `runEA` and `evalTypeIError`)
-      - simplified of additional arguments
+      - simplified passing on of additional arguments to user-defined enrichment
+        methods for functions `runEA` and `evalTypeIError`
     o The TCGA RNA-seq compendium can now also be obtained via curatedTCGAData
       using `loadEData("tcga", mode = "cTD")`
         
