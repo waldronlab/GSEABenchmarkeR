@@ -12,7 +12,7 @@ cacheResource(res, rname, ucdir = "GSEABenchmarkeR")
 \item{rname}{Character. Resource name.}
 
 \item{ucdir}{Character. User cache directory. Defaults to 'GSEABenchmarkeR',
-which will accordingly use \code{rappdirs::user_cache_dir("GSEABenchmarkeR")}.}
+which will accordingly use \code{tools::R_user_dir("GSEABenchmarkeR", which = "cache")}.}
 }
 \value{
 None. Stores the object in the cache by side effect.
@@ -38,7 +38,7 @@ expression data compendium via caching.
 
 }
 \seealso{
-\code{\link{loadEData}}, \code{\link{user_cache_dir}}, 
+\code{\link{loadEData}}, \code{\link{R_user_dir}}, 
 \code{\linkS4class{BiocFileCache}}
 }
 \author{

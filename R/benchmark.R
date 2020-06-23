@@ -64,7 +64,7 @@
 #' benchmarking?  Defaults to \code{FALSE}.
 #' @param out.dir Character.  Determines the output directory where results are
 #' saved to.  Defaults to \code{NULL}, which then writes to
-#' \code{rappdirs::user_data_dir("GSEABenchmarkeR")} in case \code{save2file}
+#' \code{tools::R_user_dir("GSEABenchmarkeR")} in case \code{save2file}
 #' is set to \code{TRUE}.
 #' @param verbose Logical. Should progress be reported? Defaults to \code{TRUE}.
 #' @param ...  Additional arguments passed to the selected enrichment methods.
@@ -271,7 +271,7 @@ evalTypeIError <- function(methods, exp.list, gs, alpha=0.05,
 #' benchmarking?  Defaults to \code{FALSE}.
 #' @param out.dir Character.  Determines the output directory where results are
 #' saved to.  Defaults to \code{NULL}, which then writes to
-#' \code{rappdirs::user_data_dir("GSEABenchmarkeR")} in case \code{save2file}
+#' \code{tools::R_user_dir("GSEABenchmarkeR")} in case \code{save2file}
 #' is set to \code{TRUE}.
 #' @param ...  Additional arguments passed to the selected enrichment method.
 #' @return A named numeric vector of length 2 storing mean and standard deviation

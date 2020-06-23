@@ -82,7 +82,7 @@
 {
     # output data directory
     if(is.null(data.dir))
-        data.dir <- rappdirs::user_data_dir("GSEABenchmarkeR")
+        data.dir <- tools::R_user_dir("GSEABenchmarkeR")
 
     data.dir <- file.path(data.dir, "GSE62944")
     tum.file <- "GSM1536837_06_01_15_TCGA_24.tumor_Rsubread_FeatureCounts.txt.gz"

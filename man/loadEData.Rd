@@ -35,7 +35,7 @@ log2 TPM values from curatedTCGAData.
 \item \code{data.dir}: character. Absolute file path
 indicating where processed RDS files for each dataset are written to.
 Defaults to \code{NULL}, which will then write to
-\code{rappdirs::user_data_dir("GSEABenchmarkeR")}.
+\code{tools::R_user_dir("GSEABenchmarkeR")}.
 \item \code{min.ctrls}: integer. Minimum number of controls, i.e. adjacent
 normal samples, for a cancer type to be included. Defaults to 9. 
 \item \code{paired}: Logical. Should the pairing of samples (tumor and adjacent

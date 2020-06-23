@@ -55,7 +55,7 @@
 #' @param beta Absolute log2 fold change cut-off. Defaults to 1 (2-fold).
 #' @param out.dir Character.  Determines the output directory where DE results
 #' for each dataset are written to.  Defaults to \code{NULL}, which then writes
-#' to a subdir named 'de' in \code{rappdirs::user_data_dir("GSEABenchmarkeR")}.
+#' to a subdir named 'de' in \code{tools::R_user_dir("GSEABenchmarkeR")}.
 #' @param max.na Integer. Determines for which genes a meta fold change is 
 #' computed. Per default, excludes genes for which the fold change is not 
 #' annotated in >= 1/3 of the datasets in \code{exp.list}.
@@ -200,7 +200,7 @@ metaFC <- function(exp.list, max.na=round(length(exp.list) / 3))
 #' benchmarking?  Defaults to \code{FALSE}.
 #' @param out.dir Character.  Determines the output directory where results are
 #' saved to.  Defaults to \code{NULL}, which then writes to
-#' \code{rappdirs::user_data_dir("GSEABenchmarkeR")} in case \code{save2file}
+#' \code{tools::R_user_dir("GSEABenchmarkeR")} in case \code{save2file}
 #' is set to \code{TRUE}.
 #' @param ...  Additional arguments passed to the selected enrichment methods.
 #' @return A list with an entry for each method applied.  Each method entry is
@@ -368,7 +368,7 @@ runEA <- function(exp.list, methods, gs, perm=1000,
 .save2file <- function(res, out.dir, method, id, ti=NULL)
 {
     if(is.null(out.dir)) 
-            out.dir <- rappdirs::user_data_dir("GSEABenchmarkeR")
+            out.dir <- tools::R_user_dir("GSEABenchmarkeR")
     out.dir <- file.path(out.dir, method)
     if(!file.exists(out.dir)) dir.create(out.dir, recursive=TRUE)
 

@@ -51,7 +51,7 @@ annotated in >= 1/3 of the datasets in \code{exp.list}.}
 
 \item{out.dir}{Character.  Determines the output directory where DE results
 for each dataset are written to.  Defaults to \code{NULL}, which then writes
-to a subdir named 'de' in \code{rappdirs::user_data_dir("GSEABenchmarkeR")}.}
+to a subdir named 'de' in \code{tools::R_user_dir("GSEABenchmarkeR")}.}
 
 \item{alpha}{Statistical significance level. Defaults to 0.05.}
 

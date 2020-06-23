@@ -47,7 +47,7 @@ benchmarking?  Defaults to \code{FALSE}.}
 
 \item{out.dir}{Character.  Determines the output directory where results are
 saved to.  Defaults to \code{NULL}, which then writes to
-\code{rappdirs::user_data_dir("GSEABenchmarkeR")} in case \code{save2file}
+\code{tools::R_user_dir("GSEABenchmarkeR")} in case \code{save2file}
 is set to \code{TRUE}.}
 
 \item{...}{Additional arguments passed to the selected enrichment methods.}

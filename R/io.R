@@ -41,7 +41,7 @@
 #' \item \code{data.dir}: character. Absolute file path
 #' indicating where processed RDS files for each dataset are written to.
 #' Defaults to \code{NULL}, which will then write to
-#' \code{rappdirs::user_data_dir("GSEABenchmarkeR")}.
+#' \code{tools::R_user_dir("GSEABenchmarkeR")}.
 #' \item \code{min.ctrls}: integer. Minimum number of controls, i.e. adjacent
 #' normal samples, for a cancer type to be included. Defaults to 9. 
 #' \item \code{paired}: Logical. Should the pairing of samples (tumor and adjacent
@@ -148,10 +148,10 @@ loadEData <- function(edata, nr.datasets=NULL, cache=TRUE, ...)
 #' @param res Resource. An arbitrary R object. 
 #' @param rname Character. Resource name. 
 #' @param ucdir Character. User cache directory. Defaults to 'GSEABenchmarkeR',
-#' which will accordingly use \code{rappdirs::user_cache_dir("GSEABenchmarkeR")}.
+#' which will accordingly use \code{tools::R_user_dir("GSEABenchmarkeR", which = "cache")}.
 #' @return None. Stores the object in the cache by side effect.
 #' @author Ludwig Geistlinger <Ludwig.Geistlinger@@sph.cuny.edu>
-#' @seealso \code{\link{loadEData}}, \code{\link{user_cache_dir}}, 
+#' @seealso \code{\link{loadEData}}, \code{\link{R_user_dir}}, 
 #' \code{\linkS4class{BiocFileCache}}
 #' @examples
 #' 
@@ -173,7 +173,7 @@ cacheResource <- function(res, rname, ucdir="GSEABenchmarkeR")
 {
     # are we running interactively?
     cache.dir <- ifelse(interactive(), 
-                    rappdirs::user_cache_dir(ucdir),
+                    tools::R_user_dir(ucdir, which = "cache"),
                     tempdir())
 
     if(!file.exists(cache.dir)) dir.create(cache.dir)
@@ -192,7 +192,7 @@ cacheResource <- function(res, rname, ucdir="GSEABenchmarkeR")
 {
     # are we running interactively?
     cache.dir <- ifelse(interactive(), 
-                    rappdirs::user_cache_dir(ucdir),
+                    tools::R_user_dir(ucdir, which = "cache"),
                     tempdir())
 
     if(!file.exists(cache.dir)) return(NULL) 
@@ -226,7 +226,7 @@ writeDE <- function(exp.list, out.dir=NULL)
 {
     if(is.null(out.dir))
     {
-        out.dir <- rappdirs::user_data_dir("GSEABenchmarkeR")
+        out.dir <- tools::R_user_dir("GSEABenchmarkeR")
         out.dir <- file.path(out.dir, "de")
     }
     if(!file.exists(out.dir)) dir.create(out.dir, recursive=TRUE)
