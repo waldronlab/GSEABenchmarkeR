@@ -2,8 +2,8 @@
 title: "Reproducible GSEA Benchmarking"
 author:
     - name: Ludwig Geistlinger
-      affiliation: School of Public Health, City University of New York
-      email: ludwig.geistlinger@sph.cuny.edu
+      affiliation: Center for Computational Biomedicine, Harvard Medical School
+      email: ludwig_geistlinger@hms.harvard.edu
 package: GSEABenchmarkeR
 abstract: > 
     The _GSEABenchmarkeR_ package implements an extendable framework for
