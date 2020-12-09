@@ -1,7 +1,7 @@
-
 # GSEABenchmarkeR
 
-The _GSEABenchmarkeR_ package implements an extendable framework for 
+The [GSEABenchmarkeR](https://bioconductor.org/packages/GSEABenchmarkeR)
+package implements an extendable framework for 
 reproducible evaluation of set- and network-based methods for enrichment 
 analysis of gene expression data. This includes support for the efficient 
 execution of these methods on comprehensive real data compendia (microarray and 
@@ -12,11 +12,10 @@ phenotypes investigated.
     
 ## Installation
 
-You can install the *GSEABenchmarkeR* package from GitHub with:
+```
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
 
-
-``` r
-# install.packages("devtools")
-devtools::install_github("waldronlab/GSEABenchmarkeR")
+BiocManager::install("GSEABenchmarkeR")
 ```
 
