@@ -28,18 +28,6 @@ suppressPackageStartupMessages({
     library(GSEABenchmarkeR)
     library(EnrichmentBrowser)
 })
-
-library(BiocFileCache)
-package = "BiocFileCache"
-
-BFC_CACHE = rappdirs::user_cache_dir(appname = package)
-Sys.setenv(BFC_CACHE = BFC_CACHE)
-bfc = BiocFileCache(BFC_CACHE)
-## CAUTION: This removes the cache and all downloaded resources
-removebfc(bfc, ask=FALSE)
-
-## create new empty cache in new default location
-bfc = BiocFileCache(ask=FALSE)
 ```
 
 # Purpose of the package

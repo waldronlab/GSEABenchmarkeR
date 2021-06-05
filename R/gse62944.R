@@ -26,7 +26,7 @@
     if(cache)
     {  
         # ignore all other arguments 
-        el <- .getResourceFromCache(rname="tcga", update.value = NA)
+        el <- .getResourceFromCache(rname = "tcga")#, update.value = NA)
         if(!is.null(el)) return(el[seq_len(min(nr.datasets, length(el)))])
     }      
  
@@ -54,8 +54,9 @@
 {
     suppressMessages({
         hub <- ExperimentHub::ExperimentHub()
+        removeCache(hub)
         gse <- AnnotationHub::query(hub, "GSE62944")
-        tum <- gse[["EH1043"]]
+        tum <- gse[["EH1043", force = TRUE]]
    }) 
 
     ind <- grep("CancerType", colnames(colData(tum)))
