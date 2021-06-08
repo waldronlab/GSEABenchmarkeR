@@ -54,7 +54,8 @@
 {
     suppressMessages({
         hub <- ExperimentHub::ExperimentHub()
-        removeCache(hub)
+        AnnotationHub::removeCache(hub, ask = FALSE)
+        hub <- ExperimentHub::ExperimentHub()
         gse <- AnnotationHub::query(hub, "GSE62944")
         tum <- gse[["EH1043", force = TRUE]]
    }) 
