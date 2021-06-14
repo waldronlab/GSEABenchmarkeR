@@ -54,10 +54,8 @@
 {
     suppressMessages({
         hub <- ExperimentHub::ExperimentHub()
-        AnnotationHub::removeCache(hub, ask = FALSE)
-        hub <- ExperimentHub::ExperimentHub()
         gse <- AnnotationHub::query(hub, "GSE62944")
-        tum <- gse[["EH1043", force = TRUE]]
+        tum <- gse[["EH1043"]]
    }) 
 
     ind <- grep("CancerType", colnames(colData(tum)))
