@@ -1,7 +1,7 @@
 Package: GSEABenchmarkeR
 Type: Package
 Title: Reproducible GSEA Benchmarking
-Version: 1.13.4
+Version: 1.13.5
 Author:
     Ludwig Geistlinger [aut, cre],
     Gergely Csaba [aut],
@@ -46,6 +46,7 @@ Imports:
     utils
 Suggests:
     BiocStyle,
+    GSE62944,
     knitr,
     rappdirs,
     rmarkdown
