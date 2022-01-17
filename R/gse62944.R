@@ -159,7 +159,7 @@
     rnacomp <- .getResourceFromCache(rname = "cTD_rnacomp")
     if(is.null(rnacomp))
     {
-        rnacomp <- curatedTCGAData("*", "RNASeq2*", FALSE)
+        rnacomp <- curatedTCGAData("*", "RNASeq2*", FALSE, version = "1.1.38")
         cacheResource(rnacomp, "cTD_rnacomp")
     }
 
