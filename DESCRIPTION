@@ -1,7 +1,7 @@
 Package: GSEABenchmarkeR
 Type: Package
 Title: Reproducible GSEA Benchmarking
-Version: 1.15.2
+Version: 1.16.0
 Author:
     Ludwig Geistlinger [aut, cre],
     Gergely Csaba [aut],
