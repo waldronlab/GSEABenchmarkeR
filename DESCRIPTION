@@ -1,7 +1,7 @@
 Package: GSEABenchmarkeR
 Type: Package
 Title: Reproducible GSEA Benchmarking
-Version: 1.20.0
+Version: 1.20.1
 Author:
     Ludwig Geistlinger [aut, cre],
     Gergely Csaba [aut],
@@ -10,7 +10,7 @@ Author:
     Marcel Ramos [ctb],
     Ralf Zimmer [aut],
     Levi Waldron [aut]
-Maintainer: Ludwig Geistlinger <Ludwig_Geistlinger@hms.harvard.edu>
+Maintainer: Ludwig Geistlinger <ludwig.geistlinger@gmail.com>
 Description:
     The GSEABenchmarkeR package implements an extendable framework for
     reproducible evaluation of set- and network-based methods for enrichment
