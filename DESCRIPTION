@@ -25,8 +25,8 @@ URL: https://github.com/waldronlab/GSEABenchmarkeR
 BugReports: https://github.com/waldronlab/GSEABenchmarkeR/issues
 License: Artistic-2.0
 Encoding: UTF-8
-LazyData: true
 Depends:
+    R (>= 4.5.0),
     Biobase,
     SummarizedExperiment
 Imports:
