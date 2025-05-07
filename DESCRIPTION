@@ -2,15 +2,16 @@ Package: GSEABenchmarkeR
 Type: Package
 Title: Reproducible GSEA Benchmarking
 Version: 1.28.0
-Author:
-    Ludwig Geistlinger [aut, cre],
-    Gergely Csaba [aut],
-    Mara Santarelli [ctb],
-    Lucas Schiffer [ctb],
-    Marcel Ramos [ctb],
-    Ralf Zimmer [aut],
-    Levi Waldron [aut]
-Maintainer: Ludwig Geistlinger <ludwig.geistlinger@gmail.com>
+Authors@R: c(
+    person("Ludwig", "Geistlinger",
+    email = "ludwig.geistlinger@gmail.com", role = c("aut", "cre")),
+    person("Gergely", "Csaba", role = "aut"),
+    person("Mara", "Santarelli", role = "ctb"),
+    person("Lucas", "Schiffer", role = "ctb"),
+    person("Marcel", "Ramos", role = "ctb"),
+    person("Ralf", "Zimmer", role = "aut"),
+    person("Levi", "Waldron", role = "aut")
+  )
 Description:
     The GSEABenchmarkeR package implements an extendable framework for
     reproducible evaluation of set- and network-based methods for enrichment
