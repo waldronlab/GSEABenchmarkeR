@@ -3,14 +3,15 @@ Type: Package
 Title: Reproducible GSEA Benchmarking
 Version: 1.33.0
 Authors@R: c(
-    person("Ludwig", "Geistlinger",
-    email = "ludwig.geistlinger@gmail.com", role = c("aut", "cre")),
+    person("Ludwig", "Geistlinger", , "ludwig.geistlinger@gmail.com", role = c("aut", "cre")),
     person("Gergely", "Csaba", role = "aut"),
     person("Mara", "Santarelli", role = "ctb"),
     person("Lucas", "Schiffer", role = "ctb"),
     person("Marcel", "Ramos", role = "ctb"),
     person("Ralf", "Zimmer", role = "aut"),
-    person("Levi", "Waldron", role = "aut")
+    person("Levi", "Waldron", role = "aut"),
+    person("NCI", role = "fnd",
+           comment = c(GrantNo. = "U24CA289073"))
   )
 Description:
     The GSEABenchmarkeR package implements an extendable framework for
