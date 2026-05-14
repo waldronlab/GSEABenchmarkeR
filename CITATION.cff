@@ -1,0 +1,89 @@
+# --------------------------------------------
+# CITATION file created with {cffr} R package
+# See also: https://docs.ropensci.org/cffr/
+# --------------------------------------------
+ 
+cff-version: 1.2.0
+message: 'To cite package "GSEABenchmarkeR" in publications use:'
+type: software
+license: Artistic-2.0
+title: 'GSEABenchmarkeR: Reproducible GSEA Benchmarking'
+version: 1.33.1
+doi: 10.1093/bib/bbz158
+abstract: The GSEABenchmarkeR package implements an extendable framework for reproducible
+  evaluation of set- and network-based methods for enrichment analysis of gene expression
+  data. This includes support for the efficient execution of these methods on comprehensive
+  real data compendia (microarray and RNA-seq) using parallel computation on standard
+  workstations and institutional computer grids. Methods can then be assessed with
+  respect to runtime, statistical significance, and relevance of the results for the
+  phenotypes investigated.
+authors:
+- family-names: Geistlinger
+  given-names: Ludwig
+  email: ludwig.geistlinger@gmail.com
+- family-names: Csaba
+  given-names: Gergely
+- family-names: Zimmer
+  given-names: Ralf
+- family-names: Waldron
+  given-names: Levi
+preferred-citation:
+  type: article
+  title: Toward a gold standard for benchmarking gene set enrichment analysis
+  authors:
+  - family-names: Geistlinger
+    given-names: Ludwig
+    email: ludwig.geistlinger@gmail.com
+  - family-names: Csaba
+    given-names: Gergely
+  - family-names: Santarelli
+    given-names: Mara
+  - family-names: Ramos
+    given-names: Marcel
+  - family-names: Schiffer
+    given-names: Lucas
+  - family-names: Law
+    given-names: Charity
+  - family-names: Turaga
+    given-names: Nitesh
+  - family-names: Davis
+    given-names: Sean
+  - family-names: Carey
+    given-names: Vincent
+  - family-names: Morgan
+    given-names: Martin
+  - family-names: Zimmer
+    given-names: Ralf
+  - family-names: Waldron
+    given-names: Levi
+  year: '2020'
+  journal: Briefings in Bioinformatics
+  doi: 10.1093/bib/bbz158
+repository: https://bioconductor.org/
+repository-code: https://github.com/waldronlab/GSEABenchmarkeR
+url: https://github.com/waldronlab/GSEABenchmarkeR
+date-released: '2026-05-14'
+contact:
+- family-names: Geistlinger
+  given-names: Ludwig
+  email: ludwig.geistlinger@gmail.com
+keywords:
+- bioconductor-package
+- u24ca289073
+references:
+- type: manual
+  title: 'GSEABenchmarkeR: Reproducible GSEA Benchmarking'
+  authors:
+  - family-names: Geistlinger
+    given-names: Ludwig
+    email: ludwig.geistlinger@gmail.com
+  - family-names: Csaba
+    given-names: Gergely
+  - family-names: Zimmer
+    given-names: Ralf
+  - family-names: Waldron
+    given-names: Levi
+  year: '2026'
+  notes: R package version 1.33.1
+  url: https://github.com/waldronlab/GSEABenchmarkeR
+
