@@ -1,7 +1,7 @@
 Package: GSEABenchmarkeR
 Type: Package
 Title: Reproducible GSEA Benchmarking
-Version: 1.34.0
+Version: 1.35.0
 Authors@R: c(
     person("Ludwig", "Geistlinger", , "ludwig.geistlinger@gmail.com", role = c("aut", "cre")),
     person("Gergely", "Csaba", role = "aut"),
